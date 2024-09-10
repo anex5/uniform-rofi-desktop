@@ -1,0 +1,59 @@
+@import "../themes/hotkeys.rasi"
+
+configuration {
+	kb-custom-1     : "control+plus";
+	kb-custom-2     : "control+minus";
+	kb-custom-3     : "control+r";
+	kb-custom-4     : "space";
+}
+
+mainbox {
+    children        : [ message, inputbar, listview, horibox ];
+}
+
+horibox {
+    expand          : false;
+    orientation     : horizontal;
+    spacing         : 0;
+    padding         : 0.5em 0.5em 0.5em 0.5em;
+    children        : [ button-add-ap, button-del-ap, button-refresh, button-toggle-wifi ];
+}
+
+button-add-ap, button-del-ap, button-refresh, button-toggle-wifi {
+    padding         : 0.25em 1em;
+    spacing         : 0;
+    expand          : true;
+    vertical-align  : 0.5;
+    horizontal-align: 0.5;
+    margin          : 0;
+    markup          : true;
+}
+
+button-add-ap selected normal, 
+button-del-ap selected normal, 
+button-refresh selected normal, 
+button-toggle-wifi selected normal {
+    text-color      : @fg1;
+    background-color: @fg2;
+}
+
+button-add-ap {
+    content         : "&#xf067;";
+    action          : "kb-custom-1";
+}
+
+button-del-ap {
+    content         : "&#xf068;";
+    action          : "kb-custom-2";
+}
+
+button-refresh {
+    content         : "&#xf021;";
+    action          : "kb-custom-3";
+}
+
+button-toggle-wifi {
+    content         : "&#xf1eb;";
+    action          : "kb-custom-4";
+}
+

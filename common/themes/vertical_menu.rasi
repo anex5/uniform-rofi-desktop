@@ -1,0 +1,60 @@
+@import "../themes/hotkeys.rasi"
+@import "../themes/nofilter.rasi"
+
+window {
+    width           : 20em;
+    x-offset        : 0;
+    y-offset        : 0;
+}
+
+listview { 
+    scrollbar       : false;
+    layout          : vertical;
+    dynamic         : true;
+    fixed-height    : false;
+}
+
+mainbox {
+    children        : [ message, inputbar, listview ];
+}
+
+inputbar { 
+    enabled: false; 
+}
+
+message { 
+    border: false; 
+}
+
+element {
+    orientation: horizontal;
+    children: [ element-icon, element-text ];
+    spacing: 5px;
+    vertical-align: 0.5;
+    text-color: inherit;
+}
+
+element-text {
+    padding: 0;
+    horizontal-align: 0; 
+    vertical-align: 0.5;
+    background-color: inherit;
+    text-color: inherit;
+    markup: true;
+    tab-stops: [230];
+}
+
+element-icon {
+    background-color: inherit;
+    text-color: inherit;
+    horizontal-align: 0.5;
+    vertical-align: 0.5;
+    expand: false;
+    border: 0px;
+}
+
+textbox {
+    horizontal-align: 0.5; 
+    vertical-align  : 0.5;
+}
+

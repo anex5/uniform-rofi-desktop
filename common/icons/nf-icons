@@ -1,0 +1,118 @@
+#!/usr/bin/env sh
+# icons declaration script
+
+icon_color='#242424' 
+icon_font='JetBrainsMonoNL NFM'
+declare -a branch
+branch[0]="├"
+branch[1]="└"
+
+write_span(){
+  # $1 - content
+  # $2 - attrs
+  echo "<span fallback='false' size='medium' foreground='${icon_color}' face='${icon_font}' ><span ${2}>${1} </span></span>"
+}
+
+declare -A icons
+icons[power]=$(write_span "&#xf011;")
+icons[poweroff]="${icons[power]}"
+icons[reboot]=$(write_span "&#xf01e;")
+icons[recycle]=$(write_span "&#xf044c;")
+icons[suspend]=$(write_span "&#xe370;")
+#icons[suspend]=$(write_span "&#xf0594;")
+icons[logout]=$(write_span "&#xf08b;")
+icons[hibernate]=$(write_span "&#x2b58;")
+icons[lock]=$(write_span "&#xf023;")
+
+icons[airplane]=$(write_span "&#xf001d;")
+icons[confirmed]=$(write_span "&#xf058;")
+icons[toggle]="<span font='${icon_font}' foreground='#33ff33' >&#xf00c; </span>"
+#$(write_span "&#xf00c;" "foreground=\'#33ff33\'")
+icons[cancel]="<span font='${icon_font}' foreground='#ff3333' >&#xf00d; </span>"
+#$(write_span "&#xf00d;" "foreground=\'#ff3333\'") # 
+icons[on]="${icons[toggle]}"
+icons[yes]="${icons[toggle]}"
+icons[true]="${icons[toggle]}"
+icons[enabled]="${icons[toggle]}"
+icons[false]="${icons[cancel]}"
+icons[no]="${icons[cancel]}"
+#icons[disabled]="${icons[cancel]}"
+icons[off]="${icons[cancel]}"
+
+#$(write_span "&#xf205;" "foreground='#33ff33'")
+
+#"<span font='${icon_font}' foreground='#33ff33' >&#xf205; </span>"
+icons[unmount]="${icons[toggle]}"
+icons[disconnect]="${icons[toggle]}"
+icons[block]="${icons[toggle]}"
+
+icons[USB]=$(write_span "&#xf0553;")
+icons[HDMI]=$(write_span "&#xf0841;")
+icons[DP]=$(write_span "&#xf0841;")
+icons[DVI]=$(write_span "&#xf065c;")
+icons[VGA]=$(write_span "&#xf065c;")
+icons[ALC]=$(write_span "&#xf186c;")
+icons[BT]=$(write_span "&#xf293;")
+icons[PCI]=$(write_span "&#xf061a;")
+icons[WiFi]=$(write_span "&#xf060a;")
+
+icons[displaytransform]=$(write_span "&#xf0475;")
+icons[displayposition]=$(write_span "&#xf037a;")
+icons[displaymode]=$(write_span "&#xf0e51;")
+icons[displaysync]=$(write_span "&#xf1aed;")
+icons[displayhinting]=$(write_span "&#xf06d6;")
+
+icons[btcomputer]=$(write_span "&#xf0aab;")
+icons[btphone]=$(write_span "&#xf03f3;")
+icons[btmodem]=$(write_span "&#xf0815;")
+icons[btnetwork-wireless]=$(write_span "&#xf03f3;")
+icons[btaudio-headset]=$(write_span "&#xf02ce;")
+icons[btaudio-headphones]=$(write_span "&#xf0970;")
+icons[btcamera-video]=$(write_span "&#xf0ed2;")
+icons[btcamera-photo]=$(write_span "&#xf0db7;")
+icons[btaudio-card]=$(write_span "&#xf09a2;")
+icons[btinput-gaming]=$(write_span "&#xf0b82;")
+icons[btinput-keyboard]=$(write_span "&#xf097b;")
+icons[btinput-tablet]=$(write_span "&#xf10a;")
+icons[btinput-mouse]=$(write_span "&#xf098b;")
+icons[btprinter]=$(write_span "&#xf0a0b;")
+icons[btscanner]=$(write_span "&#xf06ab;")
+icons[btmultimedia-player]=$(write_span "&#xf098b;")
+icons[btvideo-display]=$(write_span "&#xf0379;")
+
+icons[btbat00]=$(write_span "&#xf008e;")   # 󰂎
+icons[btbat10]=$(write_span "&#xf007a;")   # 󰁺
+icons[btbat20]=$(write_span "&#xf007b;")   # 󰁻
+icons[btbat30]=$(write_span "&#xf007c;")   # 󰁼
+icons[btbat40]=$(write_span "&#xf007d;")   # 󰁽
+icons[btbat50]=$(write_span "&#xf007e;")   # 󰁾
+icons[btbat60]=$(write_span "&#xf007f;")   # 󰁿
+icons[btbat70]=$(write_span "&#xf0080;")   # 󰂀
+icons[btbat80]=$(write_span "&#xf0081;")   # 󰂁
+icons[btbat90]=$(write_span "&#xf0082;")   # 󰂂
+icons[btbat100]=$(write_span "&#xf0079;")  # 󰁹
+
+icons[btconnect]=$(write_span "&#xf00b1;")
+icons[link]=$(write_span "&#xf44c;")
+icons[trust]=$(write_span "&#xf0d34;")
+icons[search]=$(write_span "&#xf002;")
+icons[discoverable]=$(write_span "&#xf06d0;")
+icons[pairable]=$(write_span "&#xf44c;")
+icons[trash]=$(write_span "&#xf014;")
+
+icons["▂▄▆█"]=$(write_span "&#xf0928;")  # 󰤨
+icons["****"]=$(write_span "&#xf0928;")  # 󰤨
+icons["▂▄▆_"]=$(write_span "&#xf0925;")  # 󰤥
+icons["*** "]=$(write_span "&#xf0925;")  # 󰤥
+icons["▂▄__"]=$(write_span "&#xf0922;")  # 󰤢
+icons["**  "]=$(write_span "&#xf0922;")  # 󰤢
+icons["▂___"]=$(write_span "&#xf091f;")  # 󰤟
+icons["*   "]=$(write_span "&#xf091f;")  # 󰤟
+icons["____"]=$(write_span "&#xf092f;")  # 󰤯
+icons["    "]=$(write_span "&#xf092f;")  # 󰤯
+
+icons["wifi2"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0ca6;</span></span>  "
+icons["wifi5"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0ca8;</span></span>  "
+icons["wifi6"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0caa;</span></span>  "
+icons["wifi7"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0cac;</span></span>  "
+

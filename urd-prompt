@@ -1,0 +1,58 @@
+#!/usr/bin/env sh
+#
+# Rofi powered menu to prompt a password.
+# Uses: rofi
+
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+source "./common/definitions"
+
+# print usage
+prog="${0##*/}"
+usage="${texts[usage]}: $prog [${texts[options]}]
+
+    ${texts[prompt_usage]}
+"
+
+# parse options
+while [ "$#" -ge 1 ]; do
+    case "${1}" in
+        -p|--placeholder)
+            prompt_placeholder="${2}"
+            shift
+        ;;
+        -n|--name)
+            prompt_header="${2}"
+            shift
+        ;;
+    esac
+    shift
+done
+handle_script_opts "$@"
+
+rofiargs="${default_rofiargs} -format f -dmenu"
+
+entry_accept="<span fallback='y'>${icons[yes]}</span>&#x0009;&#x2068;${texts[confirm]^}&#x2069;"
+entry_cancel="<span fallback='y'>${icons[cancel]}</span>&#x0009;&#x2068;${texts[cancel]^}&#x2069;"
+
+prompt=$(echo -e "" | ${ROFI} ${rofiargs} -mesg "${prompt_header^}" \
+    -theme-str "entry { placeholder: \"${prompt_placeholder^}\"; }" \
+    -theme-str "@import \"./common/themes/prompt.rasi\" ${default_themestr}" \
+    -theme-str "button-accept { str: \"${entry_accept}\"; }" \
+    -theme-str "button-cancel { str: \"${entry_cancel}\"; }" \
+)
+
+rofi_ret=$?
+
+case ${rofi_ret} in
+0)  # Entry chosen
+    echo -e "${prompt}"
+;;
+1)  die 1 ""
+;;
+1[0-9]|2[0-8]) # run new instance on custom key chosen
+	./${prog} ${args}
+;;
+*)  die ${rofi_ret} "${texts[error]:-"Error: "}${rofi_ret}"
+;;
+esac
+

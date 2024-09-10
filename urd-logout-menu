@@ -1,0 +1,46 @@
+#!/usr/bin/env sh
+cd "$(dirname "${BASH_SOURCE[0]}")"
+source "./common/definitions"
+prog="${0##*/}"
+args=$*
+usage="${texts[usage]}: ${prog} [$texts[options]]
+
+    ${texts[logout_usage]}
+    ${common_usage}
+"
+# parse options
+handle_script_opts "$@"
+source "./common/langs/${default_lang}"
+
+rofiargs="${default_rofiargs} -no-custom -format i "
+
+# All supported choices
+all=(poweroff reboot suspend hibernate logout lock)
+
+# By default, show all (i.e., just copy the array)
+show=("${all[@]}")
+#show=(poweroff reboot suspend logout lock) 
+
+# By default, ask for confirmation for actions that are irreversible
+confirmations=(reboot poweroff logout)
+
+declare -A act
+act[lock]="swaylock -f -c 000000"
+#act[lock]="loginctl lock-session ${XDG_SESSION_ID-}"
+act[logout]="loginctl kill-user $USER"
+act[suspend]="loginctl suspend"
+act[hibernate]="loginctl hibernate"
+act[reboot]="loginctl reboot"
+act[poweroff]="loginctl poweroff"
+
+for i in "${show[@]}"; do
+    entries+="$(write_menuentry "${texts[${i}]}" "${icons[${i}]}")\n"
+    confirm+=( $( [[ "${confirmations[@]}" =~ "${i}" ]] && echo true || echo false) )
+    actions+=( "${act[${i}]}" )
+    error_msgs+=( "${texts[${i}]} ${texts[failed]:-failed}." )
+done
+
+header="${texts[header_shutdown]}"
+theme="./common/themes/vertical_menu.rasi"
+handle_rofi
+

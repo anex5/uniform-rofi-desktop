@@ -1,0 +1,12 @@
+configuration {
+    timeout {
+        delay       : 5;
+        action      : "kb-cancel";
+    }
+}
+
+textbox {
+    horizontal-align: 0.5; 
+    vertical-align  : 0.5;
+    text-color      : #000000; /*@fg1;*/
+}

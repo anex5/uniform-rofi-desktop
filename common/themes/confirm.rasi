@@ -1,0 +1,23 @@
+@import "../themes/hotkeys.rasi"
+mainbox {
+    children        : [ message, listview ];
+}
+textbox {
+    horizontal-align: 0.5; 
+    vertical-align  : 0.5; 
+}
+listview { 
+    scrollbar       : false;
+    layout          : vertical;
+    columns         : 2;
+    lines           : 1;
+}
+element { 
+    vertical-align  : 0.5;
+}
+element-text { 
+    padding         : 0; 
+    horizontal-align: 0.35;
+    markup          : true;
+}
+

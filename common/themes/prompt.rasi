@@ -1,0 +1,58 @@
+@import "../themes/hotkeys.rasi"
+mainbox {
+    children        : [ message, inputbar, horibox ];
+}
+horibox {
+    width           : 100%;
+    orientation     : horizontal;
+    spacing         : 0;
+    children        : [ button-accept, button-cancel ];
+}
+message { border: false; }
+inputbar {
+    children: [icon-pass,entry,overlay];
+    enabled: true; 
+}
+prompt, entry, element-icon, element-text { vertical-align: 0.5; }
+
+icon-pass {
+    padding         : 0;
+    margin          : 0;
+    spacing         : 0;
+    expand          : false;
+    filename        : "./common/svg/search.svg";
+    size            : 1.0em;
+}
+textbox {
+    horizontal-align: 0.5; 
+    vertical-align  : 0.5; 
+}
+textbox-prompt-colon {
+    str             : ">";
+}
+button-accept, button-cancel {
+    padding         : 0.25em 1em;
+    spacing         : 0.5em;
+    expand          : true;
+    vertical-align  : 0.5;
+    horizontal-align: 0.5;
+    margin          : 0;
+    markup          : true;
+    enabled         : true;
+    highlight       : underline red;
+    tab-stops       : [2];
+}
+button-accept {
+    content         : "Ok";
+    action          : "kb-accept-custom";
+}
+button-cancel {
+    content         : "Cancel";
+    action          : "kb-cancel";
+}
+button-accept selected normal,
+button-cancel selected normal {
+    background-color: @bg2;
+    text-color      : @fg1;
+}
+

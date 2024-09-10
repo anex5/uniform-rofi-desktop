@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+cd "$(dirname "${BASH_SOURCE[0]}")"
+source "./common/definitions"
+prog="${0##*/}"
+args=$*
+usage="${texts[usage]}: ${prog} [${texts[options]}]
+
+    ${texts[usage_date]}
+    ${common_usage}
+"
+handle_script_opts "$@"
+rofiargs="${default_rofiargs} -format i -custom-keys "
+CAL="cal -1 -m -v --color=never"
+SED="/bin/sed -u"
+theme="./common/themes/table.rasi"
+
+ROFI_YM="${ROFI_YM:-$(date +'%-Y-%-m')}"
+IFS=- read year month <<< "$ROFI_YM"
+day="$(date +%-d)"
+cal=$(${CAL} ${month} ${year})
+header="$(${SED} -n 's/^ *//g;s/ *$//g;1{p;q}' <<< "${cal}")"
+entries="$(echo -n "${cal}" | ${SED} '1d' | ${SED} 's/./\n/3;P;D' | ${SED} -z 's/\n/\\n/g' | ${SED} -z 's/\([^0-9\\n]\+\)\\n/\1\\x00nonselectable\\x1ftrue\\n/g' )"
+parsed_entries="$(sed -z 's/\\n/\n/g' <<< "${entries}")"
+urgent="$(echo -n "${parsed_entries}" | ${SED} -n '/^..\\x00nonselectable\\x1ftrue$/=' | ${SED} -z 's/\([0-9]\+\)\n/echo -n $((\1-1)),;/ge')"
+urgent="${urgent%%,}"
+if [[ "$year-$month" = "$(date +'%-Y-%-m')" ]]; then
+    active="$(echo -n "${parsed_entries}" | ${SED} -n "s/[[:space:]]//g;/^${day}$/=" | ${SED} -z 's/\([0-9]\+\)\n/echo -n $((\1-1));/ge')"
+else
+    active="100"
+fi
+#buttons="\\uf053\\n\\uf053\\uf053\\n  \\x00nonselectable\\x1ftrue\\n\\uf444\\n  \\x00nonselectable\\x1ftrue\\n\\uf054\\uf054\\n\\uf054"
+
+handle_rofi
+
+case ${rofi_ret} in
+0)  # set date
+    wl-copy -o -p ${year}${month}${chosen}
+;;
+1)  # Cancelled by user
+    die 0 "${texts[canceled]:-"Cancelled..."}"
+;;
+10) # rofi kb-custom-1: go to prev month
+		year=$(( month-1 < 1 ? year-1 : year ))
+		month=$(( month-1 < 1 ? 12 : month-1 ))
+;;
+11) # rofi kb-custom-2: go to next month
+		year=$(( month+1 > 12 ? year+1 : year ))
+		month=$(( month+1 > 12 ? 1 : month+1 ))
+;;
+12) # rofi kb-custom-3: go to prev year
+		year=$(( year-1 ))
+;;
+13) # rofi kb-custom-4: go to next year
+		year=$(( year+1 ))
+;;
+14) # rofi kb-custom-5: go to current month
+		IFS=- read year month <<< $(date +'%-Y-%-m')
+;;
+esac
+

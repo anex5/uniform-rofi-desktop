@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+cd "$(dirname "${BASH_SOURCE[0]}")"
+source "./common/definitions"
+prog="${0##*/}"
+args="$*"
+usage="${texts[usage]}: ${prog} [${texts[options]}]
+
+    ${texts[pipewire_source_usage]}
+    ${common_usage}
+"
+# parse options
+handle_script_opts "$@"
+source "./common/langs/${default_lang}"
+rofiargs="${default_rofiargs} -no-custom -format i "
+header="${texts[header_pipewire_source]}"
+theme="./common/themes/vertical_menu.rasi"
+
+WPCTL="/usr/bin/wpctl"
+SED="/bin/sed -un"
+
+declare -A act
+act[select]="${WPCTL} set-default"
+act[toggle]="${WPCTL} set-mute"
+
+IFS=$NF read -d '' -a devices <<< "$(${WPCTL} status | ${SED} '/ ├─ Sources:/,/ │  $/ {//! p}' | ${SED} 's/^ │  \(.*\)$/\1/p' )"
+[[ ${#devices[@]} -eq 0 ]] && die 1 "${texts[noaudiosources]:-"No audio device sources"}"
+
+for i in "${!devices[@]}"; do
+    str="${devices[i]}"
+    enabled="$( [[ "${str:0:1}" == "*" ]] && echo toggle || echo select )"
+    ids="$(${SED} "s/^[* ]\+\([0-9]\+\).*$/\1/p" <<< ${str})"
+    name="$(${SED} "s/^[* ]\+[0-9]\+\. \(.*\)$/\1/p" <<< ${str})"
+    device="$(${WPCTL} inspect ${ids} | ${SED} 's/^ \+api\.alsa\.pcm\.id = \"\([A-Z]\+\).*\"/\1/p')"
+    entries+="$(write_menuentry "${icons[${device}]} ${name}" "${icons[${enabled}]}")\n"
+    actions+=( "${act[$enabled]} ${ids} ${enabled}" )
+    error_msgs+=( "${texts[cantset]:-"Can't set"} ${texts[audiosource]:-audio source}" )
+done
+
+handle_rofi
+

@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+#
+# Rofi powered menu to confirm previous choise.
+# Uses: rofi
+
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+source "./common/definitions"
+
+# print usage
+prog="${0##*/}"
+usage="${texts[usage]}: $prog [${texts[options]}]
+
+    ${texts[confirm_usage]}
+"
+
+prompt_header="${texts[areyousure]}"
+# parse options
+while [ "$#" -ge 1 ]; do
+    case "${1}" in
+        -n|--name)
+            prompt_header="${2}"
+            shift
+        ;;
+    esac
+    shift
+done
+
+handle_script_opts "$@"
+rofiargs="${default_rofiargs} -no-custom -format i "
+
+entries+="$(write_menuentry "${texts[confirm]}" "${icons[yes]}")\n"
+entries+="$(write_menuentry "${texts[cancel]}" "${icons[cancel]}")\n"
+
+chosen=$(echo -en "${entries}" | ${ROFI} ${rofiargs} -mesg "${prompt_header^}" -theme-str '@import "./common/themes/confirm.rasi"' -dmenu -selected-row 1)
+
+case "$chosen" in
+    "0") exit 0 ;;
+    *)   exit 1 ;;
+esac
