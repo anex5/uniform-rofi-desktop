@@ -33,7 +33,7 @@ for i in "${!devices[@]}"; do
     device="$(${WPCTL} inspect ${ids} | ${SED} 's/^ \+api\.alsa\.pcm\.id = \"\([A-Z]\+\).*\"/\1/p')"
     entries+="$(write_menuentry "${icons[${device}]} ${name}" "${icons[${enabled}]}")\n"
     actions+=( "${act[$enabled]} ${ids} ${enabled}" )
-    error_msgs+=( "${texts[cantset]:-"Can't set"} ${texts[audiosink]:-"audio sink"}" )
+    error_msgs+=( "${texts[cant]:-"Can't"} ${texts[set]:-"set"} ${texts[audiosink]:-"audio sink"}" )
 done
 
 handle_rofi

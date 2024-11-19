@@ -2,6 +2,7 @@
 # common auxiliary functions and definitions
 
 shopt -s extglob
+set +x
 dryrun=false
 force_dmenu=false
 default_icons="nf-icons"
@@ -13,11 +14,12 @@ active=""
 urgent=""
 header=""
 theme=""
+nbsp=$'\302\240'
 source ./common/langs/$default_lang
 source ./common/icons/$default_icons
 
 # Check version of bash for variable indirection
-case $BASH_VERSION in ''|[123].*|4.[012]) die -1 "Bash 4.3+ needed" ; esac
+case $BASH_VERSION in ''|[123].*|4.[012]) die 1 "Bash 4.3+ needed" ; esac
 
 ROFI="/usr/bin/rofi ${default_rofiargs}"
 SED="/bin/sed -u"
@@ -78,7 +80,7 @@ handle_script_opts() {
                     unset texts
                     common_usage=''
                     default_lang="${2}"
-                    source ./common/langs/"${2}" || die -1 "${texts[nofile]:-"No such file "} ./common/langs/$2"
+                    source ./common/langs/"${2}" || die 1 "${texts[nofile]:-"No such file "} ./common/langs/$2"
                 fi
                 shift
   	        ;;
@@ -86,13 +88,13 @@ handle_script_opts() {
                 default_themestr+=" inputbar { enabled: true; } configuration { kb-clear-line: \"\"; }"
             ;;
             -a|--args)
-                while read -d' ' -r arg; do default_rofiargs+=" ${arg}"; done <<< "${2?${texts[missingarg]:-Missing argument}} " || die -1 "Argument required to pass it to rofi."
+                while read -d' ' -r arg; do default_rofiargs+=" ${arg}"; done <<< "${2?${texts[missingarg]:-Missing argument}} " || die 1 "Argument required to pass it to rofi."
                 shift
             ;;
 	        -m|--monitor) 
 	            if [[ "${!anchors[@]}" != *${2?${texts[missingarg]:-Missing argument} --monitor}* ]]; then
 		            warn "Invalid position: ${2}"
-		            die -1 "Try e.g. 'northwest' or 'center' instead"
+		            die 1 "Try e.g. 'northwest' or 'center' instead"
 	            fi
 	            rofiargs+=" -m -3"
 	            default_themestr+=" window { anchor: ${anchors[${2}]}; location: center; } "
@@ -101,7 +103,7 @@ handle_script_opts() {
 	        -w|--window)
 	            if [[ "${!anchors[@]}" != *${2?${texts[missingarg]:-Missing argument} --window}* ]]; then
 		            warn "Invalid position: ${2}"
-		            die -1 "Try e.g. 'northwest' or 'center' instead"
+		            die 1 "Try e.g. 'northwest' or 'center' instead"
 	            fi
 	            rofiargs+=" -m -2"
 	            default_themestr+=" window { anchor: ${2}; location: ${2}; x-offset: ${xoffsets[${2}]}em; y-offset: ${yoffsets[${2}]}em; } "
@@ -199,7 +201,7 @@ warn() {
 die() {
 	[[ "${1}" =~ ^[-0-9]+$ ]] && local retval=${1} && shift
     local msg="$@"
-	[[ ${retval} -lt 0 ]] && send_notification "${msg^}"
+	[[ ${retval} -gt 0 ]] && send_notification "${texts[programtermination]:-program termination}" "${msg^}"
 	warn "${msg^}"
 	exit ${retval}
 }
@@ -253,26 +255,29 @@ catch_posix() {
     {
         IFS=$NF"${_CTRL_Z_}" read -r -d "${_CTRL_Z_}" "${1}";
         IFS=$NF"${_CTRL_Z_}" read -r -d "${_CTRL_Z_}" "${2}";
-        (IFS=$NF"${_CTRL_Z_}" read -r -d "${_CTRL_Z_}" _ERRNO_; return ${_ERRNO_});
+        ( IFS=$NF"${_CTRL_Z_}" read -r -d "${_CTRL_Z_}" _ERRNO_; return ${_ERRNO_}; )
     } <<EOF
-$((printf "${_CTRL_Z_}%s${_CTRL_Z_}%d${_CTRL_Z_}" "$(((({ ${3}; echo "${?}" 1>&3-; } | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 4>&2- 2>&1- | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 3>&1- | exit "$(cat)") 4>&1-)" "${?}" 1>&2) 2>&1)
+$( (printf "${_CTRL_Z_}%s${_CTRL_Z_}%d${_CTRL_Z_}" "$( ( ( ({ shift 2; "${@}"; echo "${?}" 1>&3-; } | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 4>&2- 2>&1- | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 3>&1- | exit "$(cat)") 4>&1-)" "${?}" 1>&2) 2>&1)
 EOF
 }
 
 run_menuentry_action() {
-    [[ -n "${1}" ]] && local action="${1}" || return -1
+    [[ -n "${1}" ]] && local action="${1}" || return 1
     [[ -n "${2}" ]] && local error_msg="${2}"
-    local output="" error=""
+    local catch_output="" 
+    local catch_error=""
+    local retcode=1
     if ${dryrun}; then
         warn "Dry run: ${action}"
         warn "error msg: ${error_msg}"
-        send_notification "Dry run: ${action} ${error_msg^}"
-        return 0
+        send_notification "Dry run:" "${action} ${error_msg^}"
     else
-        local retcode=$(catch_posix output error "${action}")
-        #warn "Action retcode: ${retcode}, Action: ${action}, Output: ${output}, Error: $error, Error msg: ${error_msg}"
-        return $retcode
+        catch_posix catch_output catch_error ${action}
+        retcode=$?
+        [ ${retcode} -lt 0 ] && send_notification "${error_msg}" "${catch_error}"
+        #warn "Action retcode: ${retcode}, Action: ${action}, Output: ${catch_output}, Error: ${catch_error}, Error msg: ${error_msg}"
     fi
+    return ${retcode}
 }
 
 send_notification() {

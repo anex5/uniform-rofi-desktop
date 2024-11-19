@@ -100,6 +100,16 @@ icons[discoverable]=$(write_span "&#xf06d0;")
 icons[pairable]=$(write_span "&#xf44c;")
 icons[trash]=$(write_span "&#xf014;")
 
+icons[scan]=$(write_span "&#xf06ab;")
+icons[preview]=$(write_span "&#xf06ab;")
+icons[dimension]=$(write_span "&#xf13d8;")
+
+icons[image_mode]=$(write_span "&#xeac6;")
+icons[image_resolution]=$(write_span "&#xf0655;")
+icons[image_format]=$(write_span "&#xf0e2d;")
+icons[image_depth]=$(write_span "&#xf03b9;")
+icons[image_position]=$(write_span "&#xf0c8e;")
+
 icons["▂▄▆█"]=$(write_span "&#xf0928;")  # 󰤨
 icons["****"]=$(write_span "&#xf0928;")  # 󰤨
 icons["▂▄▆_"]=$(write_span "&#xf0925;")  # 󰤥
