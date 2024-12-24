@@ -18,6 +18,7 @@ theme="./common/themes/vertical_menu.rasi"
 TIMEOUT=5
 BTCTL="/usr/bin/bluetoothctl"
 check_runtime_deps "${BTCTL}"
+coproc ${BTCTL}
 
 declare -A act 
 act[connect]='bt_connect'
@@ -33,11 +34,12 @@ bt_pair(){
 }
 
 set_device(){
-    [ -n "${1}" ] && local device="${1}"
-    local curr_powered="$( ${GREP} -q "Powered: yes" <<< "${bdinfo}" && echo "on" || echo "off" )"
-    local curr_pairable="$( ${GREP} -q "Pairable: yes" <<< "${bdinfo}" && echo "on" || echo "off" )"
-    local curr_discoverable="$( ${GREP} -q "Discoverable: yes" <<< "${bdinfo}" && echo "on" || echo "off" )"
-    local curr_scanning="$( ${GREP} -q "Discovering: yes" <<< "${bdinfo}" && echo "on" || echo "off" )"
+    local index="${1?${texts[missingarg]:-Missing argument} index}"
+    local device="${2?${texts[missingarg]:-Missing argument} device}"
+    local curr_powered="$( ${GREP} -q "Powered: yes" <<< "${bdinfo[${index}]}" && echo "on" || echo "off" )"
+    local curr_pairable="$( ${GREP} -q "Pairable: yes" <<< "${bdinfo[${index}]}" && echo "on" || echo "off" )"
+    local curr_discoverable="$( ${GREP} -q "Discoverable: yes" <<< "${bdinfo[${index}]}" && echo "on" || echo "off" )"
+    local curr_scanning="$( ${GREP} -q "Discovering: yes" <<< "${bdinfo[${index}]}" && echo "on" || echo "off" )"
 
     entries="" 
     actions=()
@@ -46,19 +48,19 @@ set_device(){
     urgent=""
 
     entries+="$(write_menuentry "${icons[power]} ${texts[power]^}" "${icons[${curr_powered}]}")\n"
-    actions+=("${BTCTL} -- power $(toggle "${curr_powered}")")
+    actions+=("$(echo -e "select ${device}\npower $(toggle "${curr_powered}")" | ${BTCTL} --)")
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[power]}")
     
     entries+="$(write_menuentry "${icons[search]} ${texts[btscan]^}" "${icons[${curr_scanning}]}")\n"
-    actions+=("${BTCTL} --timeout ${TIMEOUT} scan $(toggle "${curr_scanning}")")
+    actions+=("$(echo -e "select ${device}\nscan $(toggle "${curr_scanning}")" | ${BTCTL} --timeout ${TIMEOUT} --)")
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[btscan]}")
     
     entries+="$(write_menuentry "${icons[discoverable]} ${texts[discoverable]^}" "${icons[${curr_discoverable}]}")\n"
-    actions+=("${BTCTL} -- discoverable $(toggle "${curr_discoverable}")")
+    actions+=("$(echo -e "select ${device}\ndiscoverable $(toggle "${curr_discoverable}")" | ${BTCTL} --)")
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[discoverable]}")
     
     entries+="$(write_menuentry "${icons[pairable]} ${texts[pairable]^}" "${icons[${curr_pairable}]}")\n"
-    actionss+=("${BTCTL} -- pairable $(toggle "${curr_pairable}")")
+    actions+=("$(echo -e "select ${device}\npairable $(toggle "${curr_pairable}")" | ${BTCTL} --)")
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[pairable]}")
 
     header="${texts[deviceoptions]:-"device options"} ${device}"
@@ -67,14 +69,16 @@ set_device(){
 }
 
 set_client(){
+    local index="${1?${texts[missingarg]:-Missing argument} index}"
+    local device="${2?${texts[missingarg]:-Missing argument} device}"
     local client="${bdclients[${1}]%% *}"
-    local name="$( ${SED} -n "s/Alias: \(.\+\)$/\1/p" <<< "${clientinfo[$1]}" )"
-    #local icon="$( ${SED} -n "s/^.\+Icon: \([A-Za-z-]\+\)$/\1/p" <<< "${clientinfo[$1]}" )"
-    local connected="$( ${GREP} -q "Connected: yes" <<< "${clientinfo[$1]}" && echo "on" || echo "off" )"
-    local bonded="$( ${GREP} -q "Bonded: yes" <<< "${clientinfo[$1]}" && echo "on" || echo "off" )"
-    local trusted="$( ${GREP} -q "Trusted: yes" <<< "${clientinfo[$1]}" && echo "on" || echo "off" )"
-    local blocked="$( ${GREP} -q "Blocked: yes" <<< "${clientinfo[$1]}" && echo "on" || echo "off" )"
-    local paired="$( ${GREP} -q "Paired: yes" <<< "${clientinfo[$1]}" && echo "on" || echo "off" )"
+    local name="$( ${SED} -n "s/Alias: \(.\+\)$/\1/p" <<< "${clientinfo[${index}]}" )"
+    #local icon="$( ${SED} -n "s/^.\+Icon: \([A-Za-z-]\+\)$/\1/p" <<< "${clientinfo[${index}]}" )"
+    local connected="$( ${GREP} -q "Connected: yes" <<< "${clientinfo[${index}]}" && echo "on" || echo "off" )"
+    local bonded="$( ${GREP} -q "Bonded: yes" <<< "${clientinfo[${index}]}" && echo "on" || echo "off" )"
+    local trusted="$( ${GREP} -q "Trusted: yes" <<< "${clientinfo[${index}]}" && echo "on" || echo "off" )"
+    local blocked="$( ${GREP} -q "Blocked: yes" <<< "${clientinfo[${index}]}" && echo "on" || echo "off" )"
+    local paired="$( ${GREP} -q "Paired: yes" <<< "${clientinfo[${index}]}" && echo "on" || echo "off" )"
 
     declare -A toggle_paired toggle_blocked toggle_trusted toggle_connected
     toggle_paired=( [off]=pair [on]=cancel-pairing )
@@ -93,19 +97,19 @@ set_client(){
     error_msgs+=("${texts[cantset]:-"can't set"} ${texts[bluetooth]} ${texts[${toggle_paired[${paired}]}]:-"${toggle_paired[${paired}]}"} ${texts[device]} ${name}")
     
     entries+="$(write_menuentry "${icons[btconnect]} ${texts[${toggle_connected[$connected]}]^}" "${icons[${connected}]}")\n"
-    actions+=("${BTCTL} -- ${toggle_connected[${connected}]} ${client}")
+    actions+=("$(echo -e "select ${device}\n${toggle_connected[${connected}]} ${client}" | ${BTCTL} --)")
     error_msgs+=("${texts[cantset]:-"can't set"} ${texts[bluetooth]} ${texts[${toggle_connected[${connected}]}]:-"${toggle_connected[${connected}]}"} ${texts[device]} ${name}")
     
     entries+="$(write_menuentry "${icons[trust]} ${texts[${toggle_trusted[$trusted]}]^}" "${icons[${trusted}]}")\n"
-    actions+=("${BTCTL} -- ${toggle_trusted[$trusted]} ${client}")
+    actions+=("$(echo -e "select ${device}\n${toggle_trusted[$trusted]} ${client}" | ${BTCTL} --)")
     error_msgs+=("${texts[cantset]:-"can't set"} ${texts[bluetooth]} ${texts[${toggle_trusted[$trusted]}]:-"${toggle_trusted[$trusted]}"} ${texts[device]} ${name}")
     
     entries+="$(write_menuentry "${icons[lock]} ${texts[${toggle_blocked[$blocked]}]^}" "${icons[${blocked}]}")\n"
-    actions+=("${BTCTL} -- ${toggle_blocked[${blocked}]} ${client}")
+    actions+=("$(echo -e "select ${device}\n${toggle_blocked[${blocked}]} ${client}" | ${BTCTL} --)")
     error_msgs+=("${texts[cantset]:-"can't set"} ${texts[bluetooth]} ${texts[${toggle_blocked[${blocked}]}]:-"${toggle_blocked[${blocked}]}"} ${texts[device]} ${name}")
 
     entries+="$(write_menuentry "${icons[trash]} ${texts[remove]^}" "${icons[yes]}")\n"
-    actions+=("${BTCTL} -- ${toggle_blocked[${blocked}]} ${client}")
+    actions+=("$(echo -e "select ${device}\n${toggle_blocked[${blocked}]} ${client}" | ${BTCTL} --)")
     error_msgs+=("${texts[cantset]:-"can't set"} ${texts[bluetooth]} ${texts[${toggle_blocked[${blocked}]}]:-"${toggle_blocked[${blocked}]}"} ${texts[device]} ${name}")
 
     header="${texts[deviceoptions]:-"device options"} ${name}"
@@ -114,12 +118,12 @@ set_client(){
 }
 
 header="${texts[header_bluetooth]:-"avaliable devices"} ${texts[bluetooth]}"
-toggle=$([ "$(rfkill list bluetooth | ${GREP} "Soft blocked" | cut -d ' ' -f 3-)" = "no" ] && echo "block" || echo "unblock" )
+toggle=$([[ "$(rfkill list bluetooth | ${GREP} "Soft blocked" | cut -d ' ' -f 3-)" =~ "yes" ]] && echo "unblock" || echo "block" )
 entries+="$(write_menuentry "${icons[BT]} ${texts[${toggle}]^} ${texts[bluetooth]:-"bluetooth"} ${texts[capability]:-capability}" "${icons[${toggle}]}")\n"
 actions+=("rfkill toggle bluetooth")
 error_msgs+=("${texts[canttogglebluetooth]:-"can't toggle bluetooth radio"}")
 
-declare -a btctl bdinfo bdclients clientinfo
+declare -a btctl bdinfo bdclients clientinfo clients
 
 IFS=$NF read -d '' -a btctl <<< "$(ls -A1 /sys/class/bluetooth | ${SED} -n 's/^\(hci[[:digit:]]\+\)$/\1/p' )"
 #$(hciconfig -a | sed -une 's/^.\+Manufacturer: \(\w\+\)/\1/p')
@@ -129,23 +133,24 @@ IFS=$NF read -d '' -a btctl <<< "$(ls -A1 /sys/class/bluetooth | ${SED} -n 's/^\
 for i in ${!btctl[@]}; do
     bdname="$(${SED} -n 's/^\(.\+\)\:v\([0-9A-Z]\+\)[a-z]\([0-9A-Z]\+\)[a-z].*$/get_device_name "\U\1" "\L\2" "\L\3" "\/usr\/share\/hwdata\/\1.ids"\n/ep' /sys/class/bluetooth/${btctl[i]}/device/modalias )"
     #bdmacaddr="$(${SED} -n "s/\(${MACADDR_SEDMASK}\) .\+$/\1/p" /sys/kernel/debug/bluetooth/${btctl[i]}/identity)"}
-    bdmacaddr="$(hciconfig -a hci0 | ${SED} -n "s/^.\+BD Address: \(${MACADDR_SEDMASK}\) .\+$/\1/p")" 
+    bdmacaddr="$(hciconfig -a ${btctl[i]} | ${SED} -n "s/^.\+BD Address: \(${MACADDR_SEDMASK}\) .\+$/\1/p")" 
     bdinfo+=("$(${BTCTL} -- show ${bdmacaddr})")
     bdpowered="$(${GREP} -q "Powered: yes" <<< "${bdinfo[i]}" && echo "on" || echo "off")"
-    bdclients="$(${SED} -n "s/Device \(${MACADDR_SEDMASK} .\+\)$/\1/p" <<< "$(${BTCTL} devices)")"
-    IFS=$NF read -d '' -a clients <<< "${bdclients}"
+    bdclients="$(${SED} -n "s/Device \(${MACADDR_SEDMASK} .\+\)$/\1/p" <<< "$(echo -e "select ${bdmacaddr}\ndevices" | ${BTCTL} --)")"
+    clients=(); IFS=$NF read -d '' -a clients <<< "${bdclients}"
     entries+="$(write_menuentry "${icons[${bdname%% *}]} ${bdname}" "${icons[${bdpowered}]}")\n"
-    actions+=("set_device ${bdmacaddr}")
-    #warn "Clients: ${clients[0]}"
+    actions+=("set_device ${i} ${bdmacaddr}")
+    #warn "Clients: ${!clients[@]} bdclients: ${bdclients}"
+    #warn "bdinfo: ${bdmacaddr} ${bdpowered}"
     for j in "${!clients[@]}"; do
-        clientinfo+=("$( ${BTCTL} -- info ${clients[j]%% *} )")
+        clientinfo+=( "$(echo -e "select ${bdmacaddr}\ninfo ${clients[j]%% *}" | ${BTCTL} --)" )
         connected="$( ${GREP} -q "Connected: yes" <<< "${clientinfo[j]}" && echo "on" || echo "off" )"
         bticon="bt$( ${SED} -n "s/^.\+Icon: \([A-Za-z-]\+\)$/\1/p" <<< "${clientinfo[$j]}" )"
         btbattery="$( ${SED} -n "s/^.\+Battery Percentage: .\+ (\([0-9]\+\))$/\1/p" <<< "${clientinfo[$j]}" )"
         #btrssi="$( ${SED} -n "s/^.\+RSSI: .\+ (\([-0-9]\+\))$/\1/p" <<< "${clientinfo[$j]}" )"
         btbaticon=$( [ -n "${btbattery}" ] && echo -e ${icons["btbat${btbattery::-1}0"]} || echo -e "")
         entries+="$(write_menuentry "$(get_branch_icon "${#clients[@]}" "${j}") ${icons[${bticon}]} ${btbaticon} ${clients[j]}" "${icons[${connected}]}")\n"
-        actions+=("set_client ${j}") 
+        actions+=("set_client ${j} ${bdmacaddr}") 
     done
 done
 

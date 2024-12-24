@@ -31,7 +31,7 @@ parse_entry(){
 }
 
 wifi_connect(){
-    local ssid="${1}"
+    local ssid="${1?${texts[missingarg]:-Missing argument} ssid}"
     local cname="${ssid:-${2//:/}}"
     if [[ " ${savedcons[*]} " =~ " ${cname} " ]]; then
         ${NMCLI} con up "${cname}" && send_notification "${texts[connected]^}: ${cname}"
@@ -46,7 +46,7 @@ wifi_connect(){
 }
 
 wifi_disconnect(){
-    local ssid="${1}"
+    local ssid="${1?${texts[missingarg]:-Missing argument} ssid}"
     local cname=${ssid:-"${2//:/}"}
     ${NMCLI} con down "${cname}" && send_notification "${texts[disconnected]^}: ${cname}"
     return $?
@@ -58,7 +58,7 @@ is_wlan_up() {
 }
 
 toggle_wlan() {
-    local ifname="${1}"
+    local ifname="${1?${texts[missingarg]:-Missing argument} ifname}"
     if is_wlan_up "${ifname}"; then
         doas ip link set dev "${ifname}" down && send_notification "${texts[wlanisdown]:-"Wireless LAN is down"}: ${ifname}"
     else
@@ -91,8 +91,7 @@ warn "${wlan[@]}"
 
 for i in ${!wlan[@]}; do
     nmcli_bss_list="$(${NMCLI} -f ${FIELDS} device wifi list ifname ${wlan[i]} --rescan auto)"
-    delete bss_list
-    IFS=$NF read -d '' -a bss_list <<< "${nmcli_bss_list}"
+    bss_list=(); IFS=$NF read -d '' -a bss_list <<< "${nmcli_bss_list}"
     devname="$(${SED} -n 's/^\(.\+\):v\([0-9A-Z]\+\)[a-z]\([0-9A-Z]\+\)[a-z].*$/get_device_name "\U\1" \"\L\2\" \"\L\3\" \"\/usr\/share\/hwdata\/\1.ids\"\n/ep' /sys/class/net/${wlan[i]}/device/modalias )"
     connected="$(is_wlan_up ${wlan[i]} && echo disconnect || echo connect)"
     entries+="$(write_menuentry "${icons[${devname%% *}]} ${devname}" "${icons[${connected}]}")\n"
