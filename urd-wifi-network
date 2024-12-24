@@ -34,13 +34,13 @@ wifi_connect(){
     local ssid="${1}"
     local cname="${ssid:-${2//:/}}"
     if [[ " ${savedcons[*]} " =~ " ${cname} " ]]; then
-        ${NMCLI} con up ${cname}
+        ${NMCLI} con up "${cname}" && send_notification "${texts[connected]^}: ${cname}"
     elif [[ "${3}" == "WEP" || "${3}" == "WPA2" || "${3}" == "WPA1" ]]; then
         [ -z "${ssid}" ] && ssid=$(./urd-prompt -p "${texts[ssidprompt]:-"Enter SSID"}" -n "${texts[ssidhint]:-"SSID name"}" )
         password=$(./urd-prompt -a "-password" -p "${texts[pskprompt]:-"Enter PSK"}" -n "${texts[pskhint]:-"Key phrase for"} ${ssid}" )
-        ${NMCLI} dev wifi connect ${ssid} password ${password} name ${cname} private yes
+        ${NMCLI} dev wifi connect "${ssid}" password "${password}" name "${cname}" private yes && send_notification "${texts[connected]^}: ${cname}"
     else
-        ${NMCLI} dev wifi connect ${ssid}
+        ${NMCLI} dev wifi connect "${ssid}" && send_notification "${texts[connected]^}: ${ssid}"
     fi
     return $?
 }
@@ -48,7 +48,7 @@ wifi_connect(){
 wifi_disconnect(){
     local ssid="${1}"
     local cname=${ssid:-"${2//:/}"}
-    ${NMCLI} con down ${cname}
+    ${NMCLI} con down "${cname}" && send_notification "${texts[disconnected]^}: ${cname}"
     return $?
 }
 
@@ -59,19 +59,19 @@ is_wlan_up() {
 
 toggle_wlan() {
     local ifname="${1}"
-    if is_wlan_up ${ifname}; then
-        doas ip link set dev ${ifname} down && send_notification "${texts[wlanisdown]:-"Wireless LAN is down"}: ${ifname}"
+    if is_wlan_up "${ifname}"; then
+        doas ip link set dev "${ifname}" down && send_notification "${texts[wlanisdown]:-"Wireless LAN is down"}: ${ifname}"
     else
-        doas ip link set dev ${ifname} up && send_notification "${texts[wlanisup]:-"Wireless LAN is up"}: ${ifname}"
+        doas ip link set dev "${ifname}" up && send_notification "${texts[wlanisup]:-"Wireless LAN is up"}: ${ifname}"
     fi
     return $?
 }
 
 toggle_wifi() {
     if [ $(${NMCLI} radio wifi) = "enabled" ]; then
-        ${NMCLI} radio wifi off
+        ${NMCLI} radio wifi off && send_notification "${texts[wifi]:-"WiFi"} ${texts[capability]:-capability} is ${texts[blocked]:-blocked}"
     else
-        ${NMCLI} radio wifi on
+        ${NMCLI} radio wifi on && send_notification "${texts[wifi]:-"WiFi"} ${texts[capability]:-capability} is ${texts[unblocked]:-unblocked}"
     fi
     return $?
 }
@@ -87,9 +87,11 @@ error_msgs+=( "${texts[canttogglewifi]:-"Can't toggle WiFi radio"}" )
 IFS=$NF read -d '' -a wlan <<< "$(ls -A1 /sys/class/net | ${SED} -n 's/^\(wl.*\)/\1/p' )"
 IFS=$NF read -d '' -a savedcons <<< "$(${NMCLI} -f NAME,TYPE con | ${SED} -n 's/^\(.\+\):802-11-wireless/\1/p' )"
 [[ ${#wlan[@]} -eq 0 ]] && die -1 "${texts[nowifidevice]}"
+warn "${wlan[@]}"
 
 for i in ${!wlan[@]}; do
     nmcli_bss_list="$(${NMCLI} -f ${FIELDS} device wifi list ifname ${wlan[i]} --rescan auto)"
+    delete bss_list
     IFS=$NF read -d '' -a bss_list <<< "${nmcli_bss_list}"
     devname="$(${SED} -n 's/^\(.\+\):v\([0-9A-Z]\+\)[a-z]\([0-9A-Z]\+\)[a-z].*$/get_device_name "\U\1" \"\L\2\" \"\L\3\" \"\/usr\/share\/hwdata\/\1.ids\"\n/ep' /sys/class/net/${wlan[i]}/device/modalias )"
     connected="$(is_wlan_up ${wlan[i]} && echo disconnect || echo connect)"
