@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+cd "$(dirname "${BASH_SOURCE[0]}")"
+source "./common/definitions"
+prog="${0##*/}"
+args=$*
+usage="${texts[usage]}: ${prog} [$texts[options]]
+
+    ${texts[font_picker_usage]}
+    ${common_usage}
+"
+# parse options
+handle_script_opts "$@"
+#source "./common/langs/${default_lang}"
+
+rofiargs="${default_rofiargs} -i -dmenu -no-custom -format p"
+
+fc-list : family | sed -e 's/,/\n/g' | sed -ne "s/^\(.\+\)$/\<span font_features='-liga' face='\1'\>\1\<\/span\>\x00icon\x1f\/usr\/share\/icons\/Adwaita\/scalable\/mimetypes\/font-x-generic.svg/p" | sort -u | \
+    ${ROFI} ${rofiargs} -mesg "${texts[header_fonts]^}" -theme-str "@import \"./common/themes/vertical_menu.rasi\"" \
+    -theme-str "${default_themestr}" | head -c-1 | wl-copy -o -p
+
