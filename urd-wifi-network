@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-cd "$(dirname "${BASH_SOURCE[0]}")"
+ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
+cd "${ORIGIN%/*}"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
@@ -87,7 +88,7 @@ error_msgs+=( "${texts[canttogglewifi]:-"Can't toggle WiFi radio"}" )
 IFS=$NF read -d '' -a wlan <<< "$(ls -A1 /sys/class/net | ${SED} -n 's/^\(wl.*\)/\1/p' )"
 IFS=$NF read -d '' -a savedcons <<< "$(${NMCLI} -f NAME,TYPE con | ${SED} -n 's/^\(.\+\):802-11-wireless/\1/p' )"
 [[ ${#wlan[@]} -eq 0 ]] && die -1 "${texts[nowifidevice]}"
-warn "${wlan[@]}"
+#warn "${wlan[@]}"
 
 for i in ${!wlan[@]}; do
     nmcli_bss_list="$(${NMCLI} -f ${FIELDS} device wifi list ifname ${wlan[i]} --rescan auto)"

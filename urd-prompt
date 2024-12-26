@@ -2,8 +2,8 @@
 #
 # Rofi powered menu to prompt a password.
 # Uses: rofi
-
-cd "$( dirname "${BASH_SOURCE[0]}" )"
+ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
+cd "${ORIGIN%/*}"
 source "./common/definitions"
 
 # print usage
