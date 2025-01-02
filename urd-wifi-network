@@ -94,6 +94,7 @@ for i in ${!wlan[@]}; do
     nmcli_bss_list="$(${NMCLI} -f ${FIELDS} device wifi list ifname ${wlan[i]} --rescan auto)"
     bss_list=(); IFS=$NF read -d '' -a bss_list <<< "${nmcli_bss_list}"
     devname="$(${SED} -n 's/^\(.\+\):v\([0-9A-Z]\+\)[a-z]\([0-9A-Z]\+\)[a-z].*$/get_device_name "\U\1" \"\L\2\" \"\L\3\" \"\/usr\/share\/hwdata\/\1.ids\"\n/ep' /sys/class/net/${wlan[i]}/device/modalias )"
+    devname="${texts[${devname%% *}]} ${devname#* }"
     connected="$(is_wlan_up ${wlan[i]} && echo disconnect || echo connect)"
     entries+="$(write_menuentry "${icons[${devname%% *}]} ${devname}" "${icons[${connected}]}")\n"
     actions+=( "toggle_wlan ${wlan[i]}" )

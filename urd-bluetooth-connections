@@ -149,6 +149,7 @@ IFS=$NF read -d '' -a btctl <<< "$(ls -A1 /sys/class/bluetooth | ${SED} -n 's/^\
 for i in ${!btctl[@]}; do
     bdname="$(${SED} -n 's/^\(.\+\)\:v\([0-9A-Z]\+\)[a-z]\([0-9A-Z]\+\)[a-z].*$/get_device_name "\U\1" "\L\2" "\L\3" "\/usr\/share\/hwdata\/\1.ids"\n/ep' /sys/class/bluetooth/${btctl[i]}/device/modalias )"
     #bdmacaddr="$(${SED} -n "s/\(${MACADDR_SEDMASK}\) .\+$/\1/p" /sys/kernel/debug/bluetooth/${btctl[i]}/identity)"}
+    bdname="${texts[${bdname%% *}]} ${bdname#* }"
     bdmacaddr="$(hciconfig -a ${btctl[i]} | ${SED} -n "s/^.\+BD Address: \(${MACADDR_SEDMASK}\) .\+$/\1/p")" 
     bdinfo+=("$(${BTCTL} -- show ${bdmacaddr})")
     bdpowered="$(${GREP} -q "Powered: yes" <<< "${bdinfo[i]}" && echo "on" || echo "off")"
