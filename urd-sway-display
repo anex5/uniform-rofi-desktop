@@ -18,7 +18,11 @@ header="${texts[header_sway_display]}"
 theme="./common/themes/vertical_menu.rasi"
 
 SWAYMSG="/usr/bin/swaymsg"
-JQ="jq --unbuffered -r"
+FIND="/usr/bin/gfind"
+JQ="/usr/bin/jq --unbuffered -r"
+
+WPSRCDIR="${HOME}/Wallpapers"
+#TEMP_BG="/tmp/background.bmp"
 
 declare -A switch power
 switch[enabled]="off"
@@ -27,8 +31,8 @@ power[true]="off"
 power[false]="on"
 
 set_mode() {
-    local display="${1}"
-    local curr_mode="${2}"
+    local display="${1?${texts[missingarg]:-"Missing argument display"}}"
+    local curr_mode="${2?${texts[missingarg]:-"Missing argument curr_mode"}}"
     entries=""; actions=(); error_msgs=(); confirm=();
     IFS=$NF read -d '' -a modes <<< "$($JQ '.[] | .modes[] |  [.width, "x", .height, "@", .refresh] | join("")' <<< ${outputs})"
     for i in "${!modes[@]}"; do
@@ -46,7 +50,7 @@ set_mode() {
 
 set_position() {
     local rofi_ret pos
-    local display="${1}"
+    local display="${1?${texts[missingarg]:-"Missing argument display"}}"
     local curr_pos="${2//,/} ${3}"
     pos=$(./urd-prompt -n "${texts[header_sway_display_position]:-"Enter display position coordinates"} (${curr_pos})" -p "${texts[displayposition]^}" )
     rofi_ret="$?"
@@ -65,8 +69,8 @@ set_scale() {
 }
 
 set_transform() {
-    local display="${1}"
-    local curr_trans="${2}"
+    local display="${1?${texts[missingarg]:-"Missing argument display"}}"
+    local curr_trans="${2?${texts[missingarg]:-"Missing argument curr_trans"}}"
     declare -a trans
     entries=""; actions=(); error_msgs=(); confirm=();
     trans=("normal" "flipped" "90" "180" "270" "flipped-90" "flipped-180" "flipped-270")
@@ -84,11 +88,11 @@ set_transform() {
 }
 
 set_hinting() {
-    local display="${1}"
-    local curr_hint="${2}"
+    local display="${1?${texts[missingarg]:-"Missing argument display"}}"
+    local curr_hint="${2?${texts[missingarg]:-"Missing argument curr_hint"}}"
     entries=""; actions=(); error_msgs=(); confirm=();
     declare -a hints
-    hints=("rgb" "bgr" "vrgb" "vbgr" "none")
+    local hints=("rgb" "bgr" "vrgb" "vbgr" "none")
     for i in "${!hints[@]}"; do
         enabled=$([[ "${curr_hint}" == "${hints[i]}" ]] && echo true || echo false )
         entries+="$(write_menuentry "${texts[${hints[i]}]}" "${icons[${enabled}]}")\n"
@@ -102,9 +106,39 @@ set_hinting() {
     return $?
 }
 
+change_bg() {
+    local display="${1?${texts[missingarg]:-"Missing argument display"}}"
+    local size="${2?${texts[missingarg]:-"Missing argument size"}}"
+    shift 2
+    local bg="${@?${texts[missingarg]:-"Missing argument bg"}}"
+    ln -snf "${bg}" ${HOME}/.local/state/lastbg 
+    ${SWAYMSG} output "${display}" bg "${bg}" stretch
+    return $?
+}
+
+set_bg() {
+    local display="${1?${texts[missingarg]:-"Missing argument display"}}"
+    local curr_mode="${2?${texts[missingarg]:-"Missing argument curr_mode"}}"
+    shift 2
+    local curr_bg="${@?${texts[missingarg]:-"Missing argument curr_bg"}}"
+    entries=""; actions=(); error_msgs=(); confirm=();
+    declare -a bgs
+    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f -iname \*\.jpg -o -iname \*\.png -o -iname \*\.webp)"
+    for f in "${bgs[@]}"; do
+        saved="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo -e "${icons[confirmed]}" )"
+        entries+="$(write_menuentry "${f##*/} ${saved}" "${f}")\n"
+        actions+=( "change_bg ${display} ${curr_mode} ${f}" )
+        error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
+    done
+    header="${texts[header_sway_display_backgrounds]:-"Availiable display backgrounds"}"
+    theme="./common/themes/vertical_menu.rasi"
+    handle_rofi
+    return $?
+}
+
 set_display() {
-    local display="${1}"
-    local i="${2}"
+    local display="${1?${texts[missingarg]:-"Missing argument display"}}"
+    local i="${2?${texts[missingarg]:-"Missing argument index"}}"
     entries=""; actions=(); error_msgs=(); confirm=();
 
     entries+="$(write_menuentry "${icons[power]} ${texts[${power[${enabled[$i]}]}]^}" "${icons[${enabled[$i]}]}")\n"
@@ -132,6 +166,10 @@ set_display() {
     #entries+="$(write_menuentry "<span>${branch[1]}</span> ${texts[render_bit_depth]^}: ${hdrs[i]}")\n"
     #actions+=("swaymsg output ${displays[i]%% *} render_bit_depth ${hdr[${hdrs[i]}]}")
     #error_msgs+=("${texts[cantsetdisplay]} ${texts[render_bit_depth]}")
+    entries+="$(write_menuentry "${icons[displaybg]} ${texts[background]^}: ${curr_bg##*/}")\n"
+    actions+=( "set_bg ${display%% *} ${curr_modes[i]} ${curr_bg}" )
+    error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
+
     header="${texts[header_sway_display_options]:-"Availiable display options"} ${display}"
     theme="./common/themes/vertical_menu.rasi"
     
@@ -140,15 +178,16 @@ set_display() {
 }
 
 outputs="$(${SWAYMSG} -r -t get_outputs)"
-IFS=$NF read -d '' -a displays <<< "$(${JQ} '.[] | [.name, .make, .model, .serial] | join(" ")' <<< ${outputs})"
-IFS=$NF read -d '' -a curr_modes <<< "$(${JQ} '.[] | .current_mode | [.width, "x" ,.height, "@", .refresh] | join("")' <<< ${outputs})"
-IFS=$NF read -d '' -a positions <<< "$(${JQ} '.[] | .rect | [.x, .y] | join(", ")' <<< ${outputs})"
-IFS=$NF read -d '' -a scales <<< "$(${JQ} '.[] | .scale' <<< ${outputs})"
-IFS=$NF read -d '' -a transforms <<< "$(${JQ} '.[] | .transform' <<< ${outputs})"
-IFS=$NF read -d '' -a adsyncs <<< "$(${JQ} '.[] | .adaptive_sync_status' <<< ${outputs})"
-IFS=$NF read -d '' -a hintings <<< "$(${JQ} '.[] | .subpixel_hinting' <<< ${outputs})"
-IFS=$NF read -d '' -a enabled <<< "$(${JQ} '.[] | .active' <<< ${outputs})"
+IFS=$NF read -r -a displays <<< "$(${JQ} '.[] | [.name, .make, .model] | join(" ")' <<< ${outputs})"
+IFS=$NF read -r -a curr_modes <<< "$(${JQ} '.[] | .current_mode | [.width, "x" ,.height, "@", .refresh] | join("")' <<< ${outputs})"
+IFS=$NF read -r -a positions <<< "$(${JQ} '.[] | .rect | [.x, .y] | join(", ")' <<< ${outputs})"
+IFS=$NF read -r -a scales <<< "$(${JQ} '.[] | .scale' <<< ${outputs})"
+IFS=$NF read -r -a transforms <<< "$(${JQ} '.[] | .transform' <<< ${outputs})"
+IFS=$NF read -r -a adsyncs <<< "$(${JQ} '.[] | .adaptive_sync_status' <<< ${outputs})"
+IFS=$NF read -r -a hintings <<< "$(${JQ} '.[] | .subpixel_hinting' <<< ${outputs})"
+IFS=$NF read -r -a enabled <<< "$(${JQ} '.[] | .active' <<< ${outputs})"
 #IFS=$NF read -d '' -a hdrs <<< not implemented yet <<< ${outputs})"
+curr_bg="$(readlink ${HOME}/.local/state/lastbg || echo ${texts[varunset]})"
 
 [[ ${#displays[@]} -eq 0 ]] && die "${texts[nodisplays]:-"No displays found"}"
 

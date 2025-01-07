@@ -4,7 +4,7 @@ common_usage='
 Опции:
 
     -i, --no-icons              Прятать иконки 
-    -l, --lang     ЯЗЫК         Установить язык интерфейса
+    -l, --lang     ЯЗЫК         Установить язык взаимодействия
     -f, --filter                Показать поле ввода символов с клавиатуры
     -a, --args     АРГУМЕНТЫ    Добавить произвольные аргументы для rofi
     -m, --monitor  ПОЗИЦИЯ      Позиционировать окно rofi относительно границ монитора
@@ -93,7 +93,7 @@ texts=(
 [blocked]="заблокированы"
 [unblock]="разблокировать"
 [unblocked]="разблокированы"
-[bluetooth]="синезуб"
+[bluetooth]="радио 802.15"
 [cantset]="Отказ установки опции"
 [cant]="Отказ"
 [noaudiosinks]="нет устройств вывода звука"
@@ -128,6 +128,8 @@ texts=(
 [header_sway_display_transform]="вращение монитора"
 [header_sway_display_workspace]="рабочий стол"
 [header_sway_display_subpixel]="сглаживание шрифтов"
+[header_sway_display_backgrounds]="доступные фоновые изображения"
+[background]="фоновое изображение"
 [left]="лево"
 [right]="право"
 [top]="верх"

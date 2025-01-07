@@ -2,7 +2,7 @@
 # icons declaration script
 
 icon_color='#242424' 
-icon_font='JetBrainsMonoNL NFM'
+icon_font='Ubuntu Nerd Font'
 declare -a branch
 branch[0]="├"
 branch[1]="└"
@@ -25,7 +25,7 @@ icons[hibernate]=$(write_span "&#x2b58;")
 icons[lock]=$(write_span "&#xf023;")
 
 icons[airplane]=$(write_span "&#xf001d;")
-icons[confirmed]=$(write_span "&#xf058;")
+icons[confirmed]="<span font='${icon_font}' foreground='#33ff33' >&#xf0791; </span>"
 icons[toggle]="<span font='${icon_font}' foreground='#33ff33' >&#xf00c; </span>"
 #$(write_span "&#xf00c;" "foreground=\'#33ff33\'")
 icons[cancel]="<span font='${icon_font}' foreground='#ff3333' >&#xf00d; </span>"
@@ -61,6 +61,7 @@ icons[displayposition]=$(write_span "&#xf037a;")
 icons[displaymode]=$(write_span "&#xf0e51;")
 icons[displaysync]=$(write_span "&#xf1aed;")
 icons[displayhinting]=$(write_span "&#xf06d6;")
+icons[displaybg]=$(write_span "&#xf1104;")
 
 icons[btcomputer]=$(write_span "&#xf0aab;")
 icons[btphone]=$(write_span "&#xf03f3;")
