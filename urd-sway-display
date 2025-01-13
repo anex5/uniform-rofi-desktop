@@ -33,11 +33,10 @@ power[false]="on"
 set_mode() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
-    local curr_mode="${curr_modes[index]}"
     entries=""; actions=(); error_msgs=(); confirm=();
     IFS=$NF read -r -d '' -a modes <<< "$($JQ '.[] | .modes[] |  [.width, "x", .height, "@", .refresh] | join("")' <<< ${outputs})"
     for i in "${!modes[@]}"; do
-        enabled=$([[ "${curr_mode}" == "${modes[i]}" ]] && echo true || echo false )
+        enabled=$([[ "${curr_modes[index]}" == "${modes[i]}" ]] && echo true || echo false )
         entries+="$(write_menuentry "${modes[i]:0:-3}.${modes[i]: -3}Hz" "${icons[${enabled}]}")\n"
         actions+=( "${SWAYMSG} output \"${display#* }\" mode ${modes[$i]:0:-3}.${modes[$i]: -3}Hz" )
         error_msgs+=( "${texts[cantsetdisplay]} ${texts[displaymode]}" )
@@ -112,8 +111,7 @@ set_hinting() {
 
 change_bg() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
-    local size="${2?${texts[missingarg]:-"Missing argument size"}}"
-    shift 2
+    shift 1
     local bg="${@?${texts[missingarg]:-"Missing argument bg"}}"
     local display="${displays[index]}"
     ln -snf "${bg}" ${HOME}/.local/state/lastbg 
@@ -129,11 +127,11 @@ set_bg() {
     local curr_mode="${curr_modes[index]}"
     entries=""; actions=(); error_msgs=(); confirm=();
     declare -a bgs
-    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f -iname \*\.jpg -o -iname \*\.png -o -iname \*\.webp)"
+    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f -iname \*\.jpg -iname \*\.jpeg -iname \*\.bmp -o -iname \*\.png -o -iname \*\.webp)"
     for f in "${bgs[@]}"; do
         saved="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo -e "${icons[confirmed]}" )"
         entries+="$(write_menuentry "${f##*/} ${saved}" "${f}")\n"
-        actions+=( "change_bg ${i} ${curr_mode} ${f}" )
+        actions+=( "change_bg ${i} ${f}" )
         error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
     done
     header="${texts[header_sway_display_backgrounds]:-"Availiable display backgrounds"}"
