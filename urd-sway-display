@@ -127,7 +127,7 @@ set_bg() {
     local curr_mode="${curr_modes[index]}"
     entries=""; actions=(); error_msgs=(); confirm=();
     declare -a bgs
-    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f -iname \*\.jpg -iname \*\.jpeg -iname \*\.bmp -o -iname \*\.png -o -iname \*\.webp)"
+    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f -o -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)"
     for f in "${bgs[@]}"; do
         saved="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo -e "${icons[confirmed]}" )"
         entries+="$(write_menuentry "${f##*/} ${saved}" "${f}")\n"
