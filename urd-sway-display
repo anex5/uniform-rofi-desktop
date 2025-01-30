@@ -16,13 +16,14 @@ rofiargs="${default_rofiargs} -no-custom -format i "
 #default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
 header="${texts[header_sway_display]}"
 theme="./common/themes/vertical_menu.rasi"
+fallback_color="#080840"
 
 SWAYMSG="/usr/bin/swaymsg"
+MPVPAPER="/usr/bin/mpvpaper -o --no-audio"
 FIND="/usr/bin/gfind"
 JQ="/usr/bin/jq --unbuffered -r"
 
 WPSRCDIR="${HOME}/Wallpapers"
-#TEMP_BG="/tmp/background.bmp"
 
 declare -A switch power
 switch[enabled]="off"
@@ -38,7 +39,7 @@ set_mode() {
     for i in "${!modes[@]}"; do
         enabled=$([[ "${curr_modes[index]}" == "${modes[i]}" ]] && echo true || echo false )
         entries+="$(write_menuentry "${modes[i]:0:-3}.${modes[i]: -3}Hz" "${icons[${enabled}]}")\n"
-        actions+=( "${SWAYMSG} output \"${display#* }\" mode ${modes[$i]:0:-3}.${modes[$i]: -3}Hz" )
+        actions+=( "${SWAYMSG} output \"${display#* }\" mode \"${modes[$i]:0:-3}.${modes[$i]: -3}Hz\"" )
         error_msgs+=( "${texts[cantsetdisplay]} ${texts[displaymode]}" )
     done
     header="${texts[header_sway_display_modes]:-"Availiable display modes"}"
@@ -54,7 +55,7 @@ set_position() {
     local curr_pos="${positions[index]%%,*}, ${positions[index]##*, }"
     pos=$(./urd-prompt -n "${texts[header_sway_display_position]:-"Enter display position coordinates"} (${curr_pos})" -p "${texts[displayposition]^}" )
     rofi_ret="$?"
-    test ${rofi_ret} -eq 0 && run_menuentry_action "swaymsg output \"${display#* }\" position ${pos}" "${texts[cantsetdisplay]} ${texts[position]}"
+    test ${rofi_ret} -eq 0 && run_menuentry_action "${SWAYMSG} output \"${display#* }\" position \"${pos}\"" "${texts[cantsetdisplay]} ${texts[position]}"
     return $?
 }
 
@@ -65,7 +66,7 @@ set_scale() {
     local curr_scale="${scales[index]}"
     scale="$(./urd-prompt -n "${texts[header_sway_display_scale]:-"Enter display scale multiplier"}" -p "${texts[displayscale]^}" )"
     rofi_ret="$?"
-    test ${rofi_ret} -eq 0 && run_menuentry_action "swaymsg output \"${display#* }\" scale ${scale}" "${texts[cantsetdisplay]} ${texts[scale]}"
+    test ${rofi_ret} -eq 0 && run_menuentry_action "${SWAYMSG} output \"${display#* }\" scale \"${scale}\"" "${texts[cantsetdisplay]} ${texts[scale]}"
     return $?
 }
 
@@ -114,8 +115,17 @@ change_bg() {
     shift 1
     local bg="${@?${texts[missingarg]:-"Missing argument bg"}}"
     local display="${displays[index]}"
-    ln -snf "${bg}" ${HOME}/.local/state/lastbg 
-    ${SWAYMSG} output \"${display#* }\" bg "${bg}" stretch
+    ln -snf "${bg}" "${HOME}/.local/state/lastbg"
+    #send_notification "${bg##*.}"
+    case "${bg##*.}" in
+        "jpg"|"jpeg"|"bmp"|"png"|"webp")
+            ${SWAYMSG} output \"${display#* }\" bg \"${HOME}/.local/state/lastbg\" stretch ${fallback_color}
+        ;;
+        #"avi"|"mp4"|"webm")
+        #    killall swaybg
+        #    ${MPVPAPER} \"${display#* }\" \"${HOME}/.local/state/lastbg\"
+        #;;
+    esac
     return $?
 }
 
@@ -127,7 +137,12 @@ set_bg() {
     local curr_mode="${curr_modes[index]}"
     entries=""; actions=(); error_msgs=(); confirm=();
     declare -a bgs
-    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f -o -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)"
+    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
+        -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp -o \
+        -name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
+    entries+="$(write_menuentry "${texts[solidcolor]:-"Solid color"} ${saved}" "<span foreground=\"${fallback_color}\">${icons[square]}</span>")\n"
+    actions+=( "${SWAYMSG} output \"${display#* }\" bg ${fallback_color} solid_color" )
+    error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
     for f in "${bgs[@]}"; do
         saved="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo -e "${icons[confirmed]}" )"
         entries+="$(write_menuentry "${f##*/} ${saved}" "${f}")\n"

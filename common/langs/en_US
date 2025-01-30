@@ -131,6 +131,7 @@ texts=(
 [header_sway_display_subpixel]="subpixel hinting"
 [header_sway_display_backgrounds]="Availiable backgrounds"
 [background]="background"
+[solidcolor]="Solid color"
 [left]="left"
 [right]="right"
 [top]="top"

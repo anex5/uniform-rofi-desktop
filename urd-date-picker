@@ -10,7 +10,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
     ${common_usage}
 "
 handle_script_opts "$@"
-rofiargs="${default_rofiargs} -format i -custom-keys "
+rofiargs="${default_rofiargs//-dmenu/} -format i -custom-keys "
 CAL="cal -1 -m -v --color=never"
 SED="/bin/sed -u"
 theme="./common/themes/table.rasi"
@@ -19,7 +19,7 @@ ROFI_YM="${ROFI_YM:-$(date +'%-Y-%-m')}"
 IFS=- read year month <<< "$ROFI_YM"
 day="$(date +%-d)"
 cal=$(${CAL} ${month} ${year})
-header="$(${SED} -n 's/^ *//g;s/ *$//g;1{p;q}' <<< "${cal}")"
+header="$(${SED} -n 's/^ *//g;s/ *$//g;s/2\([0-9][0-9]\+\)/ऊ1\1/p' <<< "${cal}")" # Julian calendar year fix
 entries="$(echo -n "${cal}" | ${SED} '1d' | ${SED} 's/./\n/3;P;D' | ${SED} -z 's/\n/\\n/g' | ${SED} -z 's/\([^0-9\\n]\+\)\\n/\1\\x00nonselectable\\x1ftrue\\n/g' )"
 parsed_entries="$(sed -z 's/\\n/\n/g' <<< "${entries}")"
 urgent="$(echo -n "${parsed_entries}" | ${SED} -n '/^..\\x00nonselectable\\x1ftrue$/=' | ${SED} -z 's/\([0-9]\+\)\n/echo -n $((\1-1)),;/ge')"
@@ -35,7 +35,9 @@ handle_rofi
 
 case ${rofi_ret} in
 0)  # set date
-    wl-copy -o -p ${year}${month}${chosen}
+		wl-copy -p "$(date -d "${year}-${month}-${chosen_row}")" && \
+			send_notification "${texts[copied]:-Copied}: $(date -d "${year}-${month}-${chosen_row}")" || \
+			send_notification "${texts[failed]:-Failed}: wl-copy"
 ;;
 1)  # Cancelled by user
     die 0 "${texts[canceled]:-"Cancelled..."}"

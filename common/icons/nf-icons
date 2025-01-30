@@ -62,6 +62,7 @@ icons[displaymode]=$(write_span "&#xf0e51;")
 icons[displaysync]=$(write_span "&#xf1aed;")
 icons[displayhinting]=$(write_span "&#xf06d6;")
 icons[displaybg]=$(write_span "&#xf1104;")
+icons[square]="<span font='${icon_font}'>&#xf0764; </span>"
 
 icons[btcomputer]=$(write_span "&#xf0aab;")
 icons[btphone]=$(write_span "&#xf03f3;")

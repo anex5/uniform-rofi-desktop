@@ -137,8 +137,8 @@ handle_rofi() {
                 else
                     run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}"
                 fi
-            else
-                die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
+            #else
+                #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
             fi
         ;;
         "1") # Cancelled by user
@@ -174,8 +174,8 @@ handle_rofi() {
                 else
                     run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}"
                 fi
-            else
-                die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
+            #else
+                #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
             fi
 
 		    #warn "Selected entry... $1"

@@ -130,6 +130,7 @@ texts=(
 [header_sway_display_subpixel]="сглаживание шрифтов"
 [header_sway_display_backgrounds]="доступные фоновые изображения"
 [background]="фоновое изображение"
+[solidcolor]="Залить цветом"
 [left]="лево"
 [right]="право"
 [top]="верх"
