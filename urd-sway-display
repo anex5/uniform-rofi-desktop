@@ -138,8 +138,8 @@ set_bg() {
     entries=""; actions=(); error_msgs=(); confirm=();
     declare -a bgs
     IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
-        -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp -o \
-        -name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
+        -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)" # -o \
+#        -name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
     entries+="$(write_menuentry "${texts[solidcolor]:-"Solid color"} ${saved}" "<span foreground=\"${fallback_color}\">${icons[square]}</span>")\n"
     actions+=( "${SWAYMSG} output \"${display#* }\" bg ${fallback_color} solid_color" )
     error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
@@ -197,14 +197,14 @@ set_display() {
 }
 
 outputs="$(${SWAYMSG} -r -t get_outputs)"
-IFS=$NF read -r -a displays <<< "$(${JQ} '.[] | [.name, .make, .model, .serial] | join(" ")' <<< ${outputs})"
-IFS=$NF read -r -a curr_modes <<< "$(${JQ} '.[] | .current_mode | [.width, "x" ,.height, "@", .refresh] | join("")' <<< ${outputs})"
-IFS=$NF read -r -a positions <<< "$(${JQ} '.[] | .rect | [.x, .y] | join(", ")' <<< ${outputs})"
-IFS=$NF read -r -a scales <<< "$(${JQ} '.[] | .scale' <<< ${outputs})"
-IFS=$NF read -r -a transforms <<< "$(${JQ} '.[] | .transform' <<< ${outputs})"
-IFS=$NF read -r -a adsyncs <<< "$(${JQ} '.[] | .adaptive_sync_status' <<< ${outputs})"
-IFS=$NF read -r -a hintings <<< "$(${JQ} '.[] | .subpixel_hinting' <<< ${outputs})"
-IFS=$NF read -r -a enabled <<< "$(${JQ} '.[] | .active' <<< ${outputs})"
+IFS=$NF read -d '' -r -a displays <<< "$(${JQ} '.[] | [.name, .make, .model, .serial] | join(" ")' <<< ${outputs})"
+IFS=$NF read -d '' -r -a curr_modes <<< "$(${JQ} '.[] | .current_mode | [.width, "x" ,.height, "@", .refresh] | join("")' <<< ${outputs})"
+IFS=$NF read -d '' -r -a positions <<< "$(${JQ} '.[] | .rect | [.x, .y] | join(", ")' <<< ${outputs})"
+IFS=$NF read -d '' -r -a scales <<< "$(${JQ} '.[] | .scale' <<< ${outputs})"
+IFS=$NF read -d '' -r -a transforms <<< "$(${JQ} '.[] | .transform' <<< ${outputs})"
+IFS=$NF read -d '' -r -a adsyncs <<< "$(${JQ} '.[] | .adaptive_sync_status' <<< ${outputs})"
+IFS=$NF read -d '' -r -a hintings <<< "$(${JQ} '.[] | .subpixel_hinting' <<< ${outputs})"
+IFS=$NF read -d '' -r -a enabled <<< "$(${JQ} '.[] | .active' <<< ${outputs})"
 #IFS=$NF read -d '' -a hdrs <<< not implemented yet <<< ${outputs})"
 curr_bg="$(readlink ${HOME}/.local/state/lastbg || echo ${texts[varunset]})"
 
