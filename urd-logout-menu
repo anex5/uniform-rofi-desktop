@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
+LOCK="/usr/bin/swaylock -f -c 000000"
+LOGIND="/bin/loginctl"
+RDEPS+="${LOCK},${LOGIND},"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
@@ -26,16 +29,16 @@ show=("${all[@]}")
 confirmations=(reboot poweroff logout)
 
 declare -A act
-act[lock]="swaylock -f -c 000000"
-#act[lock]="loginctl lock-session ${XDG_SESSION_ID-}"
-act[logout]="loginctl kill-user $USER"
-act[suspend]="loginctl suspend"
-act[hibernate]="loginctl hibernate"
-act[reboot]="loginctl reboot"
-act[poweroff]="loginctl poweroff"
+act[lock]="${LOCK}"
+#act[lock]="${LOGIND} lock-session ${XDG_SESSION_ID-}"
+act[logout]="${LOGIND} kill-user $USER"
+act[suspend]="${LOGIND} suspend"
+act[hibernate]="${LOGIND} hibernate"
+act[reboot]="${LOGIND} reboot"
+act[poweroff]="${LOGIND} poweroff"
 
 for i in "${show[@]}"; do
-    entries+="$(write_menuentry "${texts[${i}]}" "${icons[${i}]}")\n"
+    entries+="$(write_menuentry "${texts[${i}]^}" "false" "${icons[${i}]}" "true")\n"
     confirm+=( $( [[ "${confirmations[@]}" =~ "${i}" ]] && echo true || echo false) )
     actions+=( "${act[${i}]}" )
     error_msgs+=( "${texts[${i}]} ${texts[failed]:-failed}." )

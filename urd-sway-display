@@ -1,6 +1,13 @@
 #!/usr/bin/env sh
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
+SWAYMSG="/usr/bin/swaymsg"
+SWAYBG="/usr/bin/swaybg"
+#MPVPAPER="/usr/bin/mpvpaper -o --no-audio"
+JQ="/usr/bin/jq --unbuffered -r"
+RDEPS+="${SWAYMSG},${SWAYBG},${JQ}"
+
+WPSRCDIR="${HOME}/Wallpapers"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
@@ -18,12 +25,6 @@ header="${texts[header_sway_display]}"
 theme="./common/themes/vertical_menu.rasi"
 fallback_color="#080840"
 
-SWAYMSG="/usr/bin/swaymsg"
-MPVPAPER="/usr/bin/mpvpaper -o --no-audio"
-FIND="/usr/bin/gfind"
-JQ="/usr/bin/jq --unbuffered -r"
-
-WPSRCDIR="${HOME}/Wallpapers"
 
 declare -A switch power
 switch[enabled]="off"
@@ -34,11 +35,11 @@ power[false]="on"
 set_mode() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
-    entries=""; actions=(); error_msgs=(); confirm=();
+    entries=""; actions=(); error_msgs=(); confirm=(); urgent=""; active=""
     IFS=$NF read -r -d '' -a modes <<< "$($JQ '.[] | .modes[] |  [.width, "x", .height, "@", .refresh] | join("")' <<< ${outputs})"
     for i in "${!modes[@]}"; do
         enabled=$([[ "${curr_modes[index]}" == "${modes[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${modes[i]:0:-3}.${modes[i]: -3}Hz" "${icons[${enabled}]}")\n"
+        entries+="$(write_menuentry "${modes[i]:0:-3}.${modes[i]: -3}Hz" "${enabled}" "${icons[displaymode]}")\n"
         actions+=( "${SWAYMSG} output \"${display#* }\" mode \"${modes[$i]:0:-3}.${modes[$i]: -3}Hz\"" )
         error_msgs+=( "${texts[cantsetdisplay]} ${texts[displaymode]}" )
     done
@@ -75,11 +76,11 @@ set_transform() {
     local display="${displays[index]}"
     local curr_trans="${transforms[index]}"
     declare -a trans
-    entries=""; actions=(); error_msgs=(); confirm=();
+    entries=""; actions=(); error_msgs=(); confirm=(); urgent=""; active=""
     trans=("normal" "flipped" "90" "180" "270" "flipped-90" "flipped-180" "flipped-270")
     for i in "${!trans[@]}"; do
         enabled=$([[ "${curr_trans}" == "${trans[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[displaytransform_${trans[$i]}]}" "${icons[${enabled}]}")\n"
+        entries+="$(write_menuentry "${texts[displaytransform_${trans[$i]}]}" "${enabled}" "${icons[displaytransform]}")\n"
         actions+=( "${SWAYMSG} output \"${display#* }\" transform ${trans[i]}" )
         error_msgs+=( "${texts[cantsetdisplay]} ${texts[transform]}" )
     done
@@ -94,12 +95,12 @@ set_hinting() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
     local curr_hint="${hintings[index]}"
-    entries=""; actions=(); error_msgs=(); confirm=();
+    entries=""; actions=(); error_msgs=(); confirm=(); urgent=""; active=""
     declare -a hints
     local hints=("rgb" "bgr" "vrgb" "vbgr" "none")
     for i in "${!hints[@]}"; do
         enabled=$([[ "${curr_hint}" == "${hints[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${hints[i]}]}" "${icons[${enabled}]}")\n"
+        entries+="$(write_menuentry "${texts[${hints[i]}]}" "${enabled}" "${icons[displayhinting]}")\n"
         actions+=( "${SWAYMSG} output \"${display#* }\" subpixel ${hints[$i]}" )
         error_msgs+=( "${texts[cantsetdisplay]} ${texts[hinting]}" )
     done
@@ -121,10 +122,10 @@ change_bg() {
         "jpg"|"jpeg"|"bmp"|"png"|"webp")
             ${SWAYMSG} output \"${display#* }\" bg \"${HOME}/.local/state/lastbg\" stretch ${fallback_color}
         ;;
-        #"avi"|"mp4"|"webm")
-        #    killall swaybg
-        #    ${MPVPAPER} \"${display#* }\" \"${HOME}/.local/state/lastbg\"
-        #;;
+        "avi"|"mp4"|"webm")
+            killall swaybg
+            ${MPVPAPER} \"${display#* }\" \"${HOME}/.local/state/lastbg\"
+        ;;
     esac
     return $?
 }
@@ -135,18 +136,19 @@ set_bg() {
     local curr_bg="${@?${texts[missingarg]:-"Missing argument curr_bg"}}"
     local display="${displays[index]}"
     local curr_mode="${curr_modes[index]}"
-    entries=""; actions=(); error_msgs=(); confirm=();
+    entries=""; actions=(); error_msgs=(); confirm=(); urgent=(); active=(); nocatch=();
     declare -a bgs
     IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
-        -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)" # -o \
-#        -name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
+        -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)"
+        #-name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
     entries+="$(write_menuentry "${texts[solidcolor]:-"Solid color"} ${saved}" "<span foreground=\"${fallback_color}\">${icons[square]}</span>")\n"
     actions+=( "${SWAYMSG} output \"${display#* }\" bg ${fallback_color} solid_color" )
     error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
     for f in "${bgs[@]}"; do
-        saved="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo -e "${icons[confirmed]}" )"
-        entries+="$(write_menuentry "${f##*/} ${saved}" "${f}")\n"
+        current="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo true || echo false )"
+        entries+="$(write_menuentry "${f##*/}" "${current}" "${f}")\n"
         actions+=( "change_bg ${i} ${f}" )
+        nocatch+=( "true" )
         error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
     done
     header="${texts[header_sway_display_backgrounds]:-"Availiable display backgrounds"}"
@@ -160,32 +162,33 @@ set_display() {
     local display="${displays[i]}"
     entries=""; actions=(); error_msgs=(); confirm=();
     
-    entries+="$(write_menuentry "${icons[power]} ${texts[${power[${enabled[$i]}]}]^}" "${icons[${enabled[$i]}]}")\n"
+    entries+="$(write_menuentry "${texts[${power[${enabled[$i]}]}]^}" "${enabled[$i]}" "${icons[power]}")\n"
     actions+=("${SWAYMSG} output \"${display#* }\" toggle")
     error_msgs+=("${texts[cantsetdisplay]} ${texts[displayactive]}")
     confirm+=(true)
-    entries+="$(write_menuentry "${icons[displaymode]} ${texts[displaymode]^}: ${curr_modes[i]:0:-3},${curr_modes[$i]: -3}")\n"
+    entries+="$(write_menuentry "${texts[displaymode]^}: ${curr_modes[i]:0:-3},${curr_modes[$i]: -3}" "" "${icons[displaymode]}")\n"
     actions+=( "set_mode ${i}" )
     error_msgs+=("${texts[cantsetdisplay]} ${texts[displaymode]}")
-    entries+="$(write_menuentry "${icons[displayposition]} ${texts[displayposition]^}: ${texts[top]}: ${positions[$i]%%,*}, ${texts[left]}: ${positions[$i]##*, } ")\n"
+    entries+="$(write_menuentry "${texts[displayposition]^}: ${texts[top]}: ${positions[$i]%%,*}, ${texts[left]}: ${positions[$i]##*, }" "" "${icons[displayposition]}")\n"
     actions+=( "set_position ${i}" )
     error_msgs+=("${texts[cantsetdisplay]} ${texts[displayposition]}")
-    entries+="$(write_menuentry "${icons[search]} ${texts[displayscale]^}: ${scales[$i]}")\n"
+    entries+="$(write_menuentry "${texts[displayscale]^}: ${scales[$i]}" "" "${icons[search]}")\n"
     actions+=( "set_scale ${i}" )
     error_msgs+=("${texts[cantsetdisplay]} ${texts[displayscale]}")
-    entries+="$(write_menuentry "${icons[displaytransform]} ${texts[displaytransform]^}: ${texts[displaytransform_${transforms[$i]}]}")\n"
+    en=$([[ "${transforms[i]}" == "normal" ]] && echo true || echo false)
+    entries+="$(write_menuentry "${texts[displaytransform]^}: ${texts[displaytransform_${transforms[$i]}]}" "${en}" "${icons[displaytransform]}")\n"
     actions+=( "set_transform ${i}" )
     error_msgs+=( "${texts[cantsetdisplay]} ${texts[displaytransform]}" )
-    entries+="$(write_menuentry "${icons[displaysync]} ${texts[adaptive_sync]^}: ${texts[${switch[${adsyncs[$i]}]}]}" "${icons[${adsyncs[$i]}]}")\n"
+    entries+="$(write_menuentry "${texts[adaptive_sync]^}: ${texts[${switch[${adsyncs[$i]}]}]}" "${bool[${adsyncs[$i]}]}" "${icons[displaysync]}")\n"
     actions+=( "${SWAYMSG} output \"${display#* }\" adaptive_sync ${switch[${adsyncs[$i]}]}" )
     error_msgs+=("${texts[cantsetdisplay]} ${texts[adaptive_sync]}")
-    entries+="$(write_menuentry "${icons[displayhinting]} ${texts[subpixel_hinting]^}: ${texts[${hintings[$i]}]}")\n"
+    entries+="$(write_menuentry "${texts[subpixel_hinting]^}: ${texts[${hintings[$i]}]}" "" "${icons[displayhinting]}")\n"
     actions+=( "set_hinting ${i}" )
     error_msgs+=( "${texts[cantsetdisplay]} ${texts[subpixel_hinting]}" )
     #entries+="$(write_menuentry "<span>${branch[1]}</span> ${texts[render_bit_depth]^}: ${hdrs[i]}")\n"
     #actions+=("swaymsg output ${displays[i]%% *} render_bit_depth ${hdr[${hdrs[i]}]}")
     #error_msgs+=("${texts[cantsetdisplay]} ${texts[render_bit_depth]}")
-    entries+="$(write_menuentry "${icons[displaybg]} ${texts[background]^}: ${curr_bg##*/}")\n"
+    entries+="$(write_menuentry "${texts[background]^}: ${curr_bg##*/}" "" "${icons[displaybg]}")\n"
     actions+=( "set_bg ${i} ${curr_bg}" )
     error_msgs+=( "${texts[cantsetdisplay]} ${texts[background]}" )
 
@@ -212,7 +215,7 @@ curr_bg="$(readlink ${HOME}/.local/state/lastbg || echo ${texts[varunset]})"
 
 for i in "${!displays[@]}"; do
     #warn "displays: ${displays[i]%% *}"
-    entries+="$(write_menuentry "${icons[${displays[i]%%-*}]} ${displays[i]}" "${icons[${enabled[i]}]}")\n"
+    entries+="$(write_menuentry "${displays[i]}" "${bool[${enabled[i]}]}" "${icons[${displays[i]%%-*}]}")\n"
     actions+=("set_display ${i}")
     error_msgs+=("${texts[cantsetdisplay]}")
 done

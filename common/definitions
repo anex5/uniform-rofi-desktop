@@ -2,6 +2,7 @@
 # common auxiliary functions and definitions
 
 shopt -s extglob
+shopt -s dotglob
 set +x
 dryrun=false
 force_dmenu=false
@@ -24,7 +25,10 @@ case $BASH_VERSION in ''|[123].*|4.[012]) die 1 "Bash 4.3+ needed" ; esac
 ROFI="/usr/bin/rofi ${default_rofiargs}"
 SED="/bin/sed -u"
 GREP="/bin/grep --color=never"
-RDEPS="${ROFI},${SED},${GREP}"
+LS="/bin/ls -A --format=single-column --color=never"
+FIND="/usr/bin/gfind"
+PRINTF="/usr/bin/printf"
+RDEPS+="${ROFI},${SED},${GREP},${LS},${FIND}"
 
 MACADDR_SEDMASK="[[:xdigit:]:]\{11,17\}"
 SPANATTRS="${default_spanattrs}"
@@ -35,12 +39,12 @@ declare -A script_opts
 script_opts=(
     [p]=prompt
     [mesg]=message
-    [markup-rows]=markup-rows
+    [markup-rows]=markuprows
     [u]=urgent
     [a]=active
     [sep]=delim
-    [no-custom]=no-custom
-    [use-hot-keys]=use-hot-keys
+    [no-custom]=nocustom
+    [use-hot-keys]=usehotkeys
 )
 
 declare -A anchors
@@ -65,11 +69,20 @@ yoffsets=(
 	[southwest]="-1" [south]="-1" [southeast]="-1"
 )
 
-declare -a actions error_msgs confirm
+declare -A bool
+bool=( 
+    [enabled]="true" [disabled]="false"
+    [on]="true" [off]="false"
+    [connect]="false" [disconnect]="true"
+    [block]="false" [unblock]="true"
+    [toggle]="true" [select]="false"
+)
+
+declare -a actions error_msgs confirm nocatch
 
 handle_script_opts() {
     while [ "$#" -ge 1 ]; do
-        case "${1}" in
+        case "${1?${texts[missingarg]:-Missing argument} script options}" in
             -i|--no-icons) 
                 unset icons
                 rofiargs+=" -no-show-icons"
@@ -122,7 +135,7 @@ handle_script_opts() {
 }
 
 handle_rofi() {
-    [[ "${default_rofiargs}" =~ "-dmenu" ]] && force_dmenu=true
+    [[ "${rofiargs}" =~ "-dmenu" ]] && force_dmenu=true
     
     if ${force_dmenu}; then
         [[ -n "${active}" ]] && rofiargs+="-a ${active} -selected-row ${active}"
@@ -133,9 +146,10 @@ handle_rofi() {
         "0") # Entry chosen
             if [ ${#actions[@]} -gt 0 -a -n "${actions[$chosen_row]}" ]; then
                 if [ ${#confirm[@]} -gt 0 -a "${confirm[$chosen_row]}" == "true" ]; then
-                    ./urd-confirm && run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}"
+                    ./urd-confirm && \
+                    run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}" "${nocatch[$chosen_row]}"
                 else
-                    run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}"
+                    run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}" "${nocatch[$chosen_row]}"
                 fi
             #else
                 #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
@@ -153,37 +167,45 @@ handle_rofi() {
     else
         #warn "direct"
         get_script_opts "${rofiargs}"
-	    [[ -n "${prompt}" ]] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
-        [[ -n "${header}" ]] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
-        [[ -n "${active}" ]] && ( echo -e "\x00active\x1f${active}"; rofiargs+="-selected-row ${active}" )
-        [[ -n "${urgent}" ]] && echo -e "\x00urgent\x1f${urgent}"
+	    [ -n "${prompt}" ] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
+        [ -n "${header}" ] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
+        [ -n "${markuprows}" ] && echo -e "\x00markup-rows\x1f${markuprows}"
+        [ -n "${urgent}" ] && echo -e "\x00urgent\x1f${urgent}"
+        [ -n "${active}" ] && ( echo -e "\x00active\x1f${active}"; rofiargs+="-selected-row ${active}" )
+        [ -n "${data}" ] && echo -e "\x00data\x1f${data}"
+        [ -n "${theme}" ] && echo -e "\x00theme\x1f${theme}"
+        [ -n "${nocustom}" ] && echo -e "\x00no-custom\x1f${nocustom}"
+        [ -n "${keepselection}" ] && echo -e "\x00keep-selection\x1f${keepselection}"
+        [ -n "${newselection}" ] && echo -e "\x00new-selection\x1f${newselection}"
+
         #warn "${entries}"
-        rofi_ret="$(${ROFI} ${rofiargs} -modi "urd:./${prog} ${args}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}" )"
+        #rofi_ret="$(${ROFI} ${rofiargs} -modi "urd:./${prog} ${args}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}" )"
 
         case "${ROFI_RETV}" in
-        #"") # script called directly
-        #    ${ROFI} ${rofiargs} -modi "urd:./${prog} ${args}" -show urd
-        #;;
+        "") # script called directly
+            ${ROFI} ${rofiargs} -modi "urd:./${prog} ${args}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}"
+        ;;
         "0") # rofi: initial call of script
   	        echo -en "${entries}"
         ;;
         "1") # rofi: selected an entry
-            if [ ${#actions[@]} -gt 0 -a -n "${actions[$chosen_row]}" ]; then
-                if [ ${#confirm[@]} -gt 0 -a -n "${confirm[$chosen_row]}" ]; then
-                    ./urd-confirm && run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}"
+            if [ ${#actions[@]} -gt 0 -a -n "${actions[$ROFI_INFO]}" ]; then
+                if [ ${#confirm[@]} -gt 0 -a -n "${confirm[$ROFI_INFO]}" ]; then
+                    ./urd-confirm && \
+                    run_menuentry_action "${actions[$ROFI_INFO]}" "${error_msgs[$ROFI_INFO]}" "${nocatch[$ROFI_INFO]}"
                 else
-                    run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}"
+                    run_menuentry_action "${actions[$ROFI_INFO]}" "${error_msgs[$ROFI_INFO]}" "${nocatch[$ROFI_INFO]}"
                 fi
             #else
                 #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
             fi
 
-		    #warn "Selected entry... $1"
+		    send_notification "Selected entry... $ROFI_INFO"
         ;;
         "2") # rofi: selected custom entry
-            warn "Selected custom-entry..."
+            : #warn "Selected custom-entry..."
         ;;
-        "*") # rofi: selected unknown entry
+        *) # rofi: selected unknown entry
 	        die "Unknown entry selected (this is a bug): $1"
         ;;
         esac
@@ -198,8 +220,9 @@ warn() {
 
 # write error and exit
 die() {
-	[[ "${1}" =~ ^[-0-9]+$ ]] && local retval=${1} && shift
-    local msg="$@"
+    local retval=-1
+	[[ "${1}" =~ ^[-0-9]+$ ]] && retval=${1} && shift
+    local msg="${*}"
 	[[ ${retval} -gt 0 ]] && send_notification "${texts[programtermination]:-program termination}" "${msg^}"
 	warn "${msg^}"
 	exit ${retval}
@@ -212,7 +235,7 @@ toggle() {
 check_runtime_deps() {
     while read -r -d',' DEP; do
         command -v ${DEP} >/dev/null 2>&1 || die 1 "${texts[missingruntimedep]:-"Missing runtime dependency"} ${DEP}"
-    done <<< "${1?${texts[missingarg]:-Missing argument}}"
+    done <<< "${1?${texts[missingarg]:-"Missing argument"} dep}"
 }
 
 get_device_name(){
@@ -230,22 +253,34 @@ export -f get_device_name
 get_branch_icon(){
     # $1 -- array length
     # $2 -- current index (count from 0)
-    echo "<span>${branch[$([ "${1}" -eq "$((${2}+1))" ] && echo 1 || echo 0)]}</span>"
+    local arr_len="${1?${texts[missingarg]:-Missing argument} arr_len}"
+    local index="${2?${texts[missingarg]:-Missing argument} index}"
+
+    echo "<span ${SPANATTRS}>${branch[$([ "${arr_len}" -eq "$((${index}+1))" ] && echo 1 || echo 0)]}</span>"
 }
 
 write_menuentry() {
     # Creates listview element menuentry for rofi
-    # $1 - text
-    # $2 - icon
-    # $3 - meta
-    # $4 - nonselectable
-    # $5 - info
     local code="00"
-    [[ -n "${1}" ]] && echo -n "<span ${SPANATTRS}>&#x2068;${1^}&#x2069;</span>"
-    [[ -n "${2}" ]] && echo -n "\x${code}icon\x1f${2}" && code="1f"
-    [[ -n "${3}" ]] && echo -n "\x${code}meta\x1f${3}" && code="1f"
-    [[ -n "${4}" ]] && echo -n "\x${code}nonselectable\x1f${4}" && code="1f"
-    [[ -n "${5}" ]] && echo -n "\x${code}info\x1f${5}"
+    local text="${1?${texts[missingarg]:-Missing argument} text}"
+    local icon="${3}"
+    local display="${9}"
+    local meta="${6}"
+    local nonselectable="${5}"
+    local permanent="${4}"
+    local info="${7}"
+    local urgent="${8}"
+    local active="${2}"
+
+    [ -n "${text}" ] && echo -n "<span ${SPANATTRS}>&#x2068;${text}&#x2069;</span>"
+    [ -n "${icon}" ] && echo -n "\x${code}icon\x1f${icon}" && code="1f"
+    [ -n "${display}" ] && echo -n "\x${code}display\x1f${display}" && code="1f"
+    [ -n "${meta}" ] && echo -n "\x${code}meta\x1f${meta}" && code="1f"
+    [[ "true false" =~ "${nonselectable}" ]] && echo -n "\x${code}nonselectable\x1f${nonselectable}" && code="1f"
+    [[ "true false" =~ "${permanent}" ]] && echo -n "\x${code}permanent\x1f${permanent}" && code="1f"
+    [ -n "${info}" ] && echo -n "\x${code}info\x1f${info}" && code="1f"
+    [[ "true false" =~ "${urgent}" ]] && echo -n "\x${code}urgent\x1f${urgent}" && code="1f"
+    [[ "true false" =~ "${active}" ]] && echo -n "\x${code}active\x1f${active}"
 }
 
 _CTRL_Z_=$'\cZ'
@@ -261,8 +296,9 @@ EOF
 }
 
 run_menuentry_action() {
-    [[ -n "${1}" ]] && local action="${1}" || return 1
-    [[ -n "${2}" ]] && local error_msg="${2}"
+    local action="${1?${texts[missingarg]:-Missing argument} action}"
+    local error_msg="${2?${texts[missingarg]:-Missing argument} error_msg}"
+    local nocatch="${3:-"false"}"
     local catch_output="" 
     local catch_error=""
     local retcode=1
@@ -271,17 +307,22 @@ run_menuentry_action() {
         warn "error msg: ${error_msg}"
         send_notification "Dry run:" "${action} ${error_msg^}"
     else
-        catch_posix catch_output catch_error ${action}
-        retcode=$?
-        [ ${retcode} -lt 0 ] && send_notification "${error_msg}" "${catch_error}"
-        #warn "Action retcode: ${retcode}, Action: ${action}, Output: ${catch_output}, Error: ${catch_error}, Error msg: ${error_msg}"
+        if ${nocatch}; then
+            ${action}
+            retcode=0
+        else
+            catch_posix catch_output catch_error ${action}
+            retcode=$?
+            [ ${retcode} -ne 0 ] && send_notification "${error_msg}" "${catch_error}"
+            #warn "Action retcode: ${retcode}, Action: ${action}, Output: ${catch_output}, Error: ${catch_error}, Error msg: ${error_msg}"
+        fi
     fi
     return ${retcode}
 }
 
 send_notification() {
-    [[ -n "${1}" ]] && local str1="${1}"
-    [[ -n "${2}" ]] && local str2="${2}"
+    local action="${1?${texts[missingarg]:-Missing argument} str1}"; shift
+    [ -n "${@}" ] && local str2="${@}"
     dbus-send --print-reply --dest=org.freedesktop.Notifications --type=method_call /org/freedesktop/Notifications org.freedesktop.Notifications.Notify \
         string:"rofi" uint32:0 string:"" string:"${str1}" string:"${str2}" array:string:"" dict:string:variant:"","" int32:10000 &>/dev/null
     return $?

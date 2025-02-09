@@ -12,6 +12,7 @@ listview {
     layout          : vertical;
     dynamic         : true;
     fixed-height    : false;
+    cursor          : "default";
 }
 
 mainbox {
@@ -28,7 +29,7 @@ message {
 
 element {
     orientation: horizontal;
-    children: [ element-icon, element-text ];
+    children: [ element-icon, element-text, button-toggle ];
     spacing: 5px;
     vertical-align: 0.5;
     text-color: inherit;
@@ -41,7 +42,8 @@ element-text {
     background-color: inherit;
     text-color: inherit;
     markup: true;
-    tab-stops: [230];
+    expand: true;
+    tab-stops: [50%];
 }
 
 element-icon {
@@ -51,10 +53,42 @@ element-icon {
     vertical-align: 0.5;
     expand: false;
     border: 0px;
+    width: 1em;
+}
+
+element-index {
+    background-color: inherit;
+    text-color: inherit;
+    horizontal-align: 0.0;
+    vertical-align: 0.5;
+    expand: false;
+    border: 0px;
+    width: 1em;
 }
 
 textbox {
     horizontal-align: 0.5; 
     vertical-align  : 0.5;
+    highlight       : none;
+}
+
+button-toggle normal.normal,
+button-toggle selected.normal,
+button-toggle alternate.normal {
+    background-color: inherit;
+    text-color: @bg3;
+    horizontal-align: 0.0;
+    vertical-align: 0.5;
+    expand: false;
+    border: 0px;
+    width: 1em;
+    markup: true;
+    content: "&#xf205;";
+}
+
+button-toggle normal.active,
+button-toggle selected.active,
+button-toggle alternate.active  {
+    text-color: #00ff00;
 }
 

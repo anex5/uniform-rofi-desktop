@@ -59,15 +59,6 @@ button-prev-month, button-prev-year, button-curr-month, button-next-year, button
     markup          : true;
 }
 
-button-prev-month selected normal, 
-button-prev-year selected normal, 
-button-curr-month selected normal, 
-button-next-year selected normal, 
-button-next-month selected normal {
-    text-color      : @fg1;
-    background-color: @fg2;
-}
-
 button-prev-month {
     content         : "&#xf104;";
     action          : "kb-custom-1";

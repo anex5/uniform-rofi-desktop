@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
+UDISKSCTL="/usr/bin/udisksctl"
+LSBLK="/bin/lsblk -n -l"
+RDEPS+="${UDISKSCTL},${LSBLK}"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
@@ -13,50 +16,54 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_script_opts "$@"
 source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
-default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
+default_themestr+="element-text { tab-stops: [6em, 10em, 13em]; } "
 header="${texts[header_usbstor]} ${texts[USB]}"
 theme="./common/themes/vertical_menu.rasi"
 
-UDISKSCTL="/usr/bin/udisksctl"
-
 is_mounted() {
-    grep -q "$(readlink -f $1)" /proc/mounts 2>/dev/null && echo unmount || echo mount
+    local device="${1?${texts[missingarg]:-Missing argument} device}"
+    ${GREP} -q "$(readlink -f "${device}")" /proc/mounts 2>/dev/null && echo true || echo false
 }
 
 mount_all() {
-    [[ -n "${1}" ]] && local device="${1}"
+    local device="${1?${texts[missingarg]:-Missing argument} device}"
     for part in ${device}-part?*; do 
         ${UDISKSCTL} mount -b ${part} --no-user-interaction
     done
 }
 
 unmount_all() {
-    [[ -n "${1}" ]] && local device="${1}"
+    local device="${1?${texts[missingarg]:-Missing argument} device}"
     for part in ${device}-part?*; do 
         ${UDISKSCTL} unmount -b ${part} --no-user-interaction
     done
     ${UDISKSCTL} power-off -b ${device} && send_notification "${texts[usbpoweroff]}" || send_notification "${texts[cantusbpoweroff]}"
 }
 
-read -d \" -r -a devices <<< "$(find /dev/disk/by-id -iname 'usb-*:[[:digit:]]')"
-[[ ${#devices[@]} -eq 0 ]] && die -1 "${texts[nousbdevice]}"
+declare -a devices
+IFS=$NF read -d \" -r -a devices <<< "$(${PRINTF} '%s\n' /dev/disk/by-id/* | ${SED} -ne '/\(usb-.*-0\:[0-9]\+\)$/p' 2>/dev/null)"
+#"$(${FIND} /dev/disk/by-id -iname 'usb-*:[[:digit:]]')"
+#warn "Devices: ${!devices[@]}"
+test ${#devices[@]} -eq 0 && die -1 "${texts[nousbdevice]}"
 
 declare -A act
-act[mount]="mount_all"
-act[unmount]="unmount_all"
+act=( [true]="unmount_all" [false]="mount_all" )
 
 for i in "${!devices[@]}"; do
-    name="$(lsblk -n -l -d -o TRAN,VENDOR,MODEL,LABEL "${devices[i]}" 2>/dev/null | sed -ure 's/[[:space:]]+/  /g;s/(^[a-z]+)/\U\1/')"
-    entries+="$(write_menuentry "${name}" "${icons[USB]}")\n"
-    actions+=( "${act[$(is_mounted ${devices[i]})]} ${devices[i]}" )
-    error_msgs+=( "${texts[cant$(is_mounted ${devices[i]})]:-"Can't $(is_mounted ${devices[i]}) device"}" )
-    read -d \" -r -a partitions <<< "$(find ${devices[i]}* -iname "usb-*-part[[:digit:]]")"
+    name="$(${LSBLK} -d -o TRAN,VENDOR,MODEL,LABEL "${devices[i]}" 2>/dev/null | ${SED} 's/[[:space:]]\+/ /g;s/\(^[a-z]\+\)/\U\1/')"
+    mounted=$(is_mounted "${devices[i]}")
+    #warn "${devices[i]} mounted=$mounted"
+    entries+="$(write_menuentry "${name}" "${mounted}" "${icons[USB]}" "true")\n"
+    actions+=( "${act[${mounted}]} ${devices[i]}" )
+    error_msgs+=( "${texts[cant]} ${texts["${act[${mounted}]}%%_*"]} ${texts[device]:-device}: ${devices[i]}" )
+    IFS=$NF read -d \" -r -a partitions <<< "$(${PRINTF} '%s\n' ${devices[i]}-part* 2>/dev/null)"
     for j in "${!partitions[@]}"; do
-        label="$(lsblk -n -l -o LABEL ${partitions[j]})" 
-        name="${label:0:16}\t$(lsblk -n -l -o PATH,FSTYPE,SIZE "${partitions[j]}" | sed -ure 's/[[:space:]]+/\\t/g;s/([<])/\&\#x003c;/')"
-        entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" "${icons[$(is_mounted ${partitions[j]})]}")\n"
-        actions+=( "${UDISKSCTL} $(is_mounted ${partitions[j]}) --no-user-interaction -b ${partitions[j]}" )
-        error_msgs+=( "${texts[cant$(is_mounted ${partitions[j]})]}" )
+        label="$(${LSBLK} -o LABEL ${partitions[j]})"
+        mounted=$(is_mounted "${partitions[$j]}")
+        name="${label:0:16}\t$(lsblk -n -l -o PATH,FSTYPE,SIZE "${partitions[j]}" | ${SED} 's/[[:space:]]\+/\t/g;s/</\&\#x003c;/')"
+        entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" "${mounted}" "${icons[partition]}")\n"
+        actions+=( "${UDISKSCTL} ${act[${mounted}]%%_*} --no-user-interaction -b ${partitions[j]}" )
+        error_msgs+=( "${texts[cant]} ${texts[${act[${mounted}]%%*_}]} ${texts[partition]:-partition}: ${partitions[j]})]}" )
     done
 done
 

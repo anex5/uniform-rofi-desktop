@@ -28,8 +28,8 @@ done
 handle_script_opts "$@"
 rofiargs="${default_rofiargs} -no-custom -format i "
 
-entries+="$(write_menuentry "${texts[confirm]}" "${icons[yes]}")\n"
-entries+="$(write_menuentry "${texts[cancel]}" "${icons[cancel]}")\n"
+entries+="$(write_menuentry "${texts[confirm]^}" "false" "${icons[yes]}" "true")\n"
+entries+="$(write_menuentry "${texts[cancel]^}" "false" "${icons[cancel]}" "true")\n"
 
 chosen=$(echo -en "${entries}" | ${ROFI} ${rofiargs} -mesg "${prompt_header^}" -theme-str '@import "./common/themes/confirm.rasi"' -dmenu -selected-row 1)
 

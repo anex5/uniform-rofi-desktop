@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
+WPCTL="/usr/bin/wpctl"
+RDEPS+="${WPCTL},"
 source "./common/definitions"
 prog="${0##*/}"
 args="$*"
@@ -16,24 +18,23 @@ rofiargs="${default_rofiargs} -no-custom -format i "
 header="${texts[header_pipewire_sink]}"
 theme="./common/themes/vertical_menu.rasi"
 
-WPCTL="/usr/bin/wpctl"
-SED="/bin/sed -un"
-
 declare -A act
 act[select]="${WPCTL} set-default"
 act[toggle]="${WPCTL} set-mute"
 
-IFS=$NF read -d '' -a devices <<< "$(${WPCTL} status | ${SED} '/ ├─ Sinks:/,/ │  $/ {//! p}' | ${SED} 's/^ │  \(.*\)$/\1/p' )"
-[[ ${#devices[@]} -eq 0 ]] && die 1 "${texts[noaudiosinks]:-"No audio device sinks"}"
+IFS=$NF read -d '' -a devices <<< "$(${WPCTL} status | ${SED} -n '/ ├─ Sinks:/,/ │  $/ {//! p}' | ${SED} -n 's/^ │  \(.*\)$/\1/p' )"
+[ ${#devices[@]} -eq 0 ] && die 1 "${texts[noaudiosinks]:-"No audio device sinks"}"
 
 for i in "${!devices[@]}"; do
     str="${devices[i]}"
     enabled="$( [[ "${str:0:1}" == "*" ]] && echo toggle || echo select )"
-    ids="$(${SED} "s/^[* ]\+\([0-9]\+\).*$/\1/p" <<< ${str})"
-    name="$(${SED} "s/^[* ]\+[0-9]\+\. \(.*\)$/\1/p" <<< ${str})"
-    device="$(${WPCTL} inspect ${ids} | ${SED} 's/^ \+api\.alsa\.pcm\.id = \"\([A-Z]\+\).*\"/\1/p')"
-    entries+="$(write_menuentry "${icons[${device}]} ${name}" "${icons[${enabled}]}")\n"
-    actions+=( "${act[$enabled]} ${ids} ${enabled}" )
+    #warn "$str"
+    volume="$(${SED} -n 's/.\+\[vol: [0-1]\.\([0-9]\)[0-9]\(.*\)\]/\1\2/p' <<< ${str})"
+    ids="$(${SED} -n "s/^[* ]\+\([0-9]\+\).*$/\1/p" <<< ${str})"
+    name="$(${SED} -n "s/^[* ]\+[0-9]\+\. \(.*\)\[.*$/\1/p" <<< ${str})"
+    device="$(${WPCTL} inspect ${ids} | ${SED} -n 's/^ \+api\.alsa\.pcm\.id = \"\([A-Z]\+\).*\"/\1/p')"
+    entries+="$(write_menuentry "${icons[vol${volume// }]} ${name}" "${bool[${enabled}]}" "${icons[${device}]}")\n"
+    actions+=( "${act[${enabled}]} ${ids} ${enabled}" )
     error_msgs+=( "${texts[cant]:-"Can't"} ${texts[set]:-"set"} ${texts[audiosink]:-"audio sink"}" )
 done
 

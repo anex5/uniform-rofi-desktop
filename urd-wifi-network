@@ -13,7 +13,8 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 # parse options
 handle_script_opts "$@"
 source "./common/langs/${default_lang}"
-rofiargs="${default_rofiargs} -no-custom -format i " 
+rofiargs="${default_rofiargs} -no-custom -format i "
+default_themestr+="element-text { tab-stops: [6em, 10em, 13em]; } "
 header="${texts[header_wifi]}"
 theme="./common/themes/vertical_menu.rasi"
 
@@ -27,7 +28,8 @@ act[connect]="wifi_connect"
 act[disconnect]="wifi_disconnect"
 
 parse_entry(){
-    IFS=':' read -r -d '' name ssid mode chan freq rate signal bars security wpa_flags rsn_flags in_use bssid <<< "${1}"
+    local entry="${1?${texts[missingarg]:-Missing argument} entry}"
+    IFS=':' read -r -d '' name ssid mode chan freq rate signal bars security wpa_flags rsn_flags in_use bssid <<< "${entry}"
     return $?
 }
 
@@ -39,7 +41,7 @@ wifi_connect(){
     elif [[ "${3}" == "WEP" || "${3}" == "WPA2" || "${3}" == "WPA1" ]]; then
         [ -z "${ssid}" ] && ssid=$(./urd-prompt -p "${texts[ssidprompt]:-"Enter SSID"}" -n "${texts[ssidhint]:-"SSID name"}" )
         password=$(./urd-prompt -a "-password" -p "${texts[pskprompt]:-"Enter PSK"}" -n "${texts[pskhint]:-"Key phrase for"} ${ssid}" )
-        ${NMCLI} dev wifi connect "${ssid}" password "${password}" name "${cname}" private yes && send_notification "${texts[connected]^}: ${cname}"
+        ${NMCLI} dev wifi connect "${ssid}" password "${password}" name "${cname}" && send_notification "${texts[connected]^}: ${cname}"
     else
         ${NMCLI} dev wifi connect "${ssid}" && send_notification "${texts[connected]^}: ${ssid}"
     fi
@@ -54,7 +56,8 @@ wifi_disconnect(){
 }
 
 is_wlan_up() {
-    [[ "$(ip link show dev ${1?${texts[missingarg]:-Missing argument} ifname} | ${SED} -n 's/^.*\<.*\(UP\)\>.*$/\1/p')" == "UP" ]]
+    local ifname=${1?${texts[missingarg]:-Missing argument} ifname}
+    [[ "$(ip link show dev ${ifname} | ${SED} -n 's/^.*\<.*\(UP\)\>.*$/\1/p')" == "UP" ]]
     return $?
 }
 
@@ -69,7 +72,7 @@ toggle_wlan() {
 }
 
 toggle_wifi() {
-    if [ $(${NMCLI} radio wifi) = "enabled" ]; then
+    if [[ "$(${NMCLI} radio wifi)" == "enabled" ]]; then
         ${NMCLI} radio wifi off && send_notification "${texts[wifi]:-"WiFi"} ${texts[capability]:-capability} is ${texts[blocked]:-blocked}"
     else
         ${NMCLI} radio wifi on && send_notification "${texts[wifi]:-"WiFi"} ${texts[capability]:-capability} is ${texts[unblocked]:-unblocked}"
@@ -79,9 +82,9 @@ toggle_wifi() {
 
 declare -a wlan savedcons
 
-toggle=$([ "$(${NMCLI} radio wifi)" = "enabled" ] && echo "block" || echo "unblock" )
+toggle=$([[ "$(${NMCLI} radio wifi)" == "enabled" ]] && echo "block" || echo "unblock" )
 #entries+="$(write_menuentry "${texts[radio${toggle}]:-"Turn WiFi radio ${toggle}"}" "${icons[${toggle}]}")\n"
-entries+="$(write_menuentry "${icons[WiFi]} ${texts[${toggle}]^} ${texts[wifi]:-"WiFi"} ${texts[capability]:-capability}" "${icons[${toggle}]}")\n"
+entries+="$(write_menuentry "${texts[${toggle}]^} ${texts[wifi]:-"WiFi"} ${texts[capability]:-capability}" "${bool[${toggle}]}" "${icons[WiFi]}" "true")\n"
 actions+=( "toggle_wifi" )
 error_msgs+=( "${texts[canttogglewifi]:-"Can't toggle WiFi radio"}" )
 
@@ -97,17 +100,17 @@ for i in ${!wlan[@]}; do
     busname="${devname%% *}"
     devname="${texts[${busname}]} ${devname#* }"
     connected="$(is_wlan_up ${wlan[i]} && echo disconnect || echo connect)"
-    entries+="$(write_menuentry "${icons[${busname}]} ${devname}" "${icons[${connected}]}")\n"
+    entries+="$(write_menuentry "${devname}" "${bool[${connected}]}" "${icons[${busname}]}" "true")\n"
     actions+=( "toggle_wlan ${wlan[i]}" )
     error_msgs+=( "${texts[canttogglewlan]:-"Can't toggle wlan"}" )
     for j in "${!bss_list[@]}"; do
         parse_entry "${bss_list[j]}"
-        connected="$([ "${in_use}" = "*" ] && echo disconnect || echo connect )"
+        connected="$([[ "${in_use}" == "*" ]] && echo disconnect || echo connect )"
         bssid="${bssid%*$NF}"
         cname="${ssid:-"${bssid//:/}"}"
         saved="$([[ " ${savedcons[*]} " =~ " ${cname} " ]] && echo -e "${icons[confirmed]}" )"
-        entries+="$(write_menuentry "$(get_branch_icon "${#bss_list[@]}" "${j}") \
-${icons[${bars}]} ${cname:0:20} ${saved}\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${security}</span></tt>" "${icons[${connected}]}")\n"
+        entries+="$(write_menuentry "$(get_branch_icon "${#bss_list[@]}" "${j}") ${cname:0:20} ${saved} \
+\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${security}</span></tt>" "${bool[${connected}]}" "${icons[${bars}]}" )\n"
         actions+=("${act[$connected]} ${ssid} ${bssid} ${security}")
         error_msgs+=("${texts[cant${connected}]}")
     done

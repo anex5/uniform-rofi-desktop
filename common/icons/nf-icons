@@ -128,3 +128,28 @@ icons["wifi5"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${ico
 icons["wifi6"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0caa;</span></span>  "
 icons["wifi7"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0cac;</span></span>  "
 
+icons[wifi]="${icons[WiFi]}"
+icons[ethernet]=$(write_span "&#xf0200;")
+icons[iptunnel]=$(write_span "&#xf183e;")
+icons[loopback]=$(write_span "&#xf071b;")
+
+icons[vol1]=$(write_span "&#xf08fe;")
+icons[vol2]=$(write_span "&#xf08fe;")
+icons[vol3]=$(write_span "&#xf08f4;")
+icons[vol4]=$(write_span "&#xf08f4;")
+icons[vol5]=$(write_span "&#xf08f6;")
+icons[vol6]=$(write_span "&#xf08f6;")
+icons[vol7]=$(write_span "&#xf08f8;")
+icons[vol8]=$(write_span "&#xf08f8;")
+icons[vol9]=$(write_span "&#xf08fa;")
+icons[vol0]=$(write_span "&#xf08fa;")
+icons[vol1MUTED]=$(write_span "&#xf08ff;")
+icons[vol2MUTED]=$(write_span "&#xf08ff;")
+icons[vol3MUTED]=$(write_span "&#xf08f5;")
+icons[vol4MUTED]=$(write_span "&#xf08f5;")
+icons[vol5MUTED]=$(write_span "&#xf08f7;")
+icons[vol6MUTED]=$(write_span "&#xf08f7;")
+icons[vol7MUTED]=$(write_span "&#xf08f9;")
+icons[vol8MUTED]=$(write_span "&#xf08f9;")
+icons[vol9MUTED]=$(write_span "&#xf08fb;")
+icons[vol0MUTED]=$(write_span "&#xf08fb;")
