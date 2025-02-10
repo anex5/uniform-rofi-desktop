@@ -11,9 +11,10 @@ WPSRCDIR="${HOME}/Wallpapers"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
+nprog=${prog//-/_}
 usage="${texts[usage]}: ${prog} [${texts[options]}]
 
-    ${texts[sway_display_usage]}
+    ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
 # parse options
@@ -215,7 +216,8 @@ curr_bg="$(readlink ${HOME}/.local/state/lastbg || echo ${texts[varunset]})"
 
 for i in "${!displays[@]}"; do
     #warn "displays: ${displays[i]%% *}"
-    entries+="$(write_menuentry "${displays[i]}" "${bool[${enabled[i]}]}" "${icons[${displays[i]%%-*}]}")\n"
+    warn "enabled: ${enabled[i]}"
+    entries+="$(write_menuentry "${displays[i]}" "${enabled[i]}" "${icons[${displays[i]%%-*}]}")\n"
     actions+=("set_display ${i}")
     error_msgs+=("${texts[cantsetdisplay]}")
 done

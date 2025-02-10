@@ -4,9 +4,11 @@ cd "${ORIGIN%/*}"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
+nprog=${prog//-/_}
+nprog=${prog//-/_}
 usage="${texts[usage]}: ${prog} [$texts[options]]
 
-    ${texts[font_picker_usage]}
+    ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
 # parse options

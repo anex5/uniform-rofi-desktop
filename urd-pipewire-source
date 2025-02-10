@@ -6,9 +6,10 @@ RDEPS+="${WPCTL},"
 source "./common/definitions"
 prog="${0##*/}"
 args="$*"
+nprog=${prog//-/_}
 usage="${texts[usage]}: ${prog} [${texts[options]}]
 
-    ${texts[pipewire_source_usage]}
+    ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
 # parse options

@@ -8,6 +8,7 @@ source "./common/definitions"
 
 # print usage
 prog="${0##*/}"
+nprog=${prog//-/_}
 usage="${texts[usage]}: $prog [${texts[options]}]
 
     ${texts[confirm_usage]}

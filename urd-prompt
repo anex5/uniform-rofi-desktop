@@ -8,9 +8,10 @@ source "./common/definitions"
 
 # print usage
 prog="${0##*/}"
+nprog=${prog//-/_}
 usage="${texts[usage]}: $prog [${texts[options]}]
 
-    ${texts[prompt_usage]}
+    ${texts[usage_${nprog##*urd_}]^}
 "
 
 # parse options

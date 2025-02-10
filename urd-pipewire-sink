@@ -6,9 +6,10 @@ RDEPS+="${WPCTL},"
 source "./common/definitions"
 prog="${0##*/}"
 args="$*"
+nprog=${prog//-/_}
 usage="${texts[usage]}: ${prog} [${texts[options]}]
 
-    ${texts[pipewire_sink_usage]}
+    ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
 # parse options
@@ -28,7 +29,6 @@ IFS=$NF read -d '' -a devices <<< "$(${WPCTL} status | ${SED} -n '/ ├─ Sinks
 for i in "${!devices[@]}"; do
     str="${devices[i]}"
     enabled="$( [[ "${str:0:1}" == "*" ]] && echo toggle || echo select )"
-    #warn "$str"
     volume="$(${SED} -n 's/.\+\[vol: [0-1]\.\([0-9]\)[0-9]\(.*\)\]/\1\2/p' <<< ${str})"
     ids="$(${SED} -n "s/^[* ]\+\([0-9]\+\).*$/\1/p" <<< ${str})"
     name="$(${SED} -n "s/^[* ]\+[0-9]\+\. \(.*\)\[.*$/\1/p" <<< ${str})"

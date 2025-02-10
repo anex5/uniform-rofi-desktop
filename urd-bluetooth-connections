@@ -7,12 +7,12 @@ RDEPS+="${BTCTL},"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
-usage="${texts[usage]}: ${prog} [${texts[options]}]
+nprog=${prog//-/_}
+usage="${texts[usage]}: ${prog} [$texts[options]]
 
-    ${bluetooth_usage}
+    ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
-
 # parse options
 handle_script_opts "$@"
 source "./common/langs/${default_lang}"

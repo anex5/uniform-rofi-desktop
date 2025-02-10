@@ -4,9 +4,10 @@ cd "${ORIGIN%/*}"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
+nprog=${prog//-/_}
 usage="${texts[usage]}: ${prog} [${texts[options]}]
 
-    ${network-info_usage}
+    ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
 
@@ -15,7 +16,7 @@ handle_script_opts "$@"
 source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
 default_themestr+="element-text { tab-stops: [6em]; } "
-header="${texts[header_network-info]:-Availiable networks}"
+header="${texts[header_network_info]:-Availiable networks}"
 theme="./common/themes/vertical_menu.rasi"
 
 TIMEOUT=3
@@ -32,7 +33,7 @@ show_netdev_info() {
         entries+="$(write_menuentry "${left_info:0:16}:\t${info[i]#*:}")\n"
         error_msgs+=( "${texts[cant]}^} ${texts[copy]}" )
     done
-    header="${texts[networkdeviceinfo]:-Network device info} ${device}"
+    header="${texts[header_networkdeviceinfo]:-Network device info} ${device}"
     theme="./common/themes/vertical_menu.rasi"
     default_themestr+="element-text { tab-stops: [9em]; } "
     default_themestr+="element-icon { enabled: false; } "
