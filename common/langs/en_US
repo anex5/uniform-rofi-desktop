@@ -163,4 +163,9 @@ texts=(
 [vbgr]="Vertical BGR"
 [none]="none"
 [bits]="bits"
+[color]="color"
+[colors]="colors"
+[image]="image"
+[video]="video"
+[backgrounds]="backgrounds"
 )

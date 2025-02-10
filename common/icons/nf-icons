@@ -62,7 +62,10 @@ icons[displaymode]=$(write_span "&#xf0e51;")
 icons[displaysync]=$(write_span "&#xf1aed;")
 icons[displayhinting]=$(write_span "&#xf06d6;")
 icons[displaybg]=$(write_span "&#xf1104;")
-icons[square]="<span font='${icon_font}'>&#xf0764; </span>"
+icons[displayinfill]=$(write_span "&#xf07fe;")
+icons[videofile]=$(write_span "&#xf1c8;")
+icons[audiofile]=$(write_span "&#xf1c7;")
+icons[imagefile]=$(write_span "&#xf1c5;")
 
 icons[btcomputer]=$(write_span "&#xf0aab;")
 icons[btphone]=$(write_span "&#xf03f3;")
@@ -111,6 +114,7 @@ icons[image_resolution]=$(write_span "&#xf0655;")
 icons[image_format]=$(write_span "&#xf0e2d;")
 icons[image_depth]=$(write_span "&#xf03b9;")
 icons[image_position]=$(write_span "&#xf0c8e;")
+
 
 icons["▂▄▆█"]=$(write_span "&#xf0928;")  # 󰤨
 icons["****"]=$(write_span "&#xf0928;")  # 󰤨

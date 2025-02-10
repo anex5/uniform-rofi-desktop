@@ -128,7 +128,7 @@ set_client(){
     return $?
 }
 
-header="${texts[header_bluetooth]:-"avaliable devices"} ${texts[bluetooth]}"
+header="${texts[header_bluetooth_connections]^}"
 toggle=$([[ "$(rfkill list bluetooth | ${GREP} "Soft blocked" | cut -d ' ' -f 3-)" =~ "yes" ]] && echo "unblock" || echo "block" )
 entries+="$(write_menuentry "${texts[${toggle}]^} ${texts[bluetooth]} ${texts[capability]}" "${toggle}" "${icons[BT]}" "true")\n"
 actions+=("rfkill toggle bluetooth")

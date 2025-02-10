@@ -308,8 +308,9 @@ run_menuentry_action() {
         send_notification "Dry run:" "${action} ${error_msg^}"
     else
         if ${nocatch}; then
-            ${action}
+            #send_notification "${action}"
             retcode=0
+            ${action}
         else
             catch_posix catch_output catch_error ${action}
             retcode=$?
@@ -321,7 +322,7 @@ run_menuentry_action() {
 }
 
 send_notification() {
-    local action="${1?${texts[missingarg]:-Missing argument} str1}"; shift
+    local str1="${1?${texts[missingarg]:-Missing argument} str1}"; shift
     [ -n "${@}" ] && local str2="${@}"
     dbus-send --print-reply --dest=org.freedesktop.Notifications --type=method_call /org/freedesktop/Notifications org.freedesktop.Notifications.Notify \
         string:"rofi" uint32:0 string:"" string:"${str1}" string:"${str2}" array:string:"" dict:string:variant:"","" int32:10000 &>/dev/null
