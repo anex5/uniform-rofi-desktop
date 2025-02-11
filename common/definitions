@@ -220,16 +220,12 @@ warn() {
 
 # write error and exit
 die() {
-    local retval=-1
-	[[ "${1}" =~ ^[-0-9]+$ ]] && retval=${1} && shift
-    local msg="${*}"
-	[[ ${retval} -gt 0 ]] && send_notification "${texts[programtermination]:-program termination}" "${msg^}"
+    local retval=0
+    if [ -z "${1//[0-9-]/}" ]; then retval=${1}; shift; fi
+    if [[ -n "${@}" ]]; then msg="${@}"; else msg="${texts[pogramterminated]^} return = ${retval}"; fi
+	if [ ${retval} -ne 0 ]; then send_notification "${msg^}"; fi
 	warn "${msg^}"
 	exit ${retval}
-}
-
-toggle() {
-    [[ "${1}" == "on" ]] && echo "off" || echo "on"
 }
 
 check_runtime_deps() {
@@ -239,10 +235,10 @@ check_runtime_deps() {
 }
 
 get_device_name(){
-    local BUS=${1?${texts[missingarg]:-"Missing argument BUS"}}
-    local VID=${2?${texts[missingarg]:-"Missing argument VID"}}
-    local DEV=${3?${texts[missingarg]:-"Missing argument DEV"}}
-    local IDS=${4?${texts[missingarg]:-"Missing argument IDS file"}}
+    local BUS=${1?${texts[missingarg]:-"Missing argument"} BUS}
+    local VID=${2?${texts[missingarg]:-"Missing argument"} VID}
+    local DEV=${3?${texts[missingarg]:-"Missing argument"} DEV}
+    local IDS=${4?${texts[missingarg]:-"Missing argument"} IDS file}
     vendor="$(/bin/sed -un 's/^'${VID}'  \(.\+\).*$/\1/p' ${IDS})"
     name="$(/bin/sed -un '/^'${VID}'/,/^\t'${DEV}'/{ s/^\t'${DEV}'  \(.\+\)$/\1/p; }' ${IDS})"
     echo -ne "${BUS} ${name} ${vendor}"

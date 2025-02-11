@@ -15,7 +15,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_script_opts "$@"
 source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
-default_themestr+="element-text { tab-stops: [6em, 10em, 13em]; } "
+default_themestr+="element-text { tab-stops: [10em, 13em]; } "
 header="${texts[header_wifi_networks]}"
 theme="./common/themes/vertical_menu.rasi"
 

@@ -17,7 +17,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_script_opts "$@"
 source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
-default_themestr+="element-text { tab-stops: [6em, 10em, 13em]; } "
+default_themestr+="element-text { tab-stops: [8em, 12em]; } "
 header="${texts[header_usbstor_mounter]}"
 theme="./common/themes/vertical_menu.rasi"
 
@@ -43,9 +43,7 @@ unmount_all() {
 
 declare -a devices
 IFS=$NF read -d \" -r -a devices <<< "$(${LS} /dev/disk/by-id/* | ${SED} -ne '/\(usb-.*-0\:[0-9]\+\)$/p' 2>/dev/null)"
-#"$(${FIND} /dev/disk/by-id -iname 'usb-*:[[:digit:]]')"
-#warn "Devices: ${!devices[@]}"
-test ${#devices[@]} -eq 0 && die -1 "${texts[nousbdevice]}"
+[ ${#devices[@]} -eq 0 ] && die -1 "${texts[nousbblockdevice]}"
 
 declare -A act
 act=( [true]="unmount_all" [false]="mount_all" )
@@ -61,7 +59,7 @@ for i in "${!devices[@]}"; do
     for j in "${!partitions[@]}"; do
         label="$(${LSBLK} -o LABEL ${partitions[j]})"
         mounted=$(is_mounted "${partitions[$j]}")
-        name="${label:0:16}\t$(${LSBLK} -o PATH,FSTYPE,SIZE "${partitions[j]}" | ${SED} 's/[[:space:]]\+/\t/g;s/</\&\#x003c;/')"
+        name="${label:0:16}\t$(${LSBLK} -o FSTYPE,SIZE "${partitions[j]}" | ${SED} 's/[[:space:]]\+/\t/g;s/</\&\#x003c;/')"
         entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" "${mounted}" "${icons[partition]}")\n"
         actions+=( "${UDISKSCTL} ${act[${mounted}]%%_*} --no-user-interaction -b ${partitions[j]}" )
         error_msgs+=( "${texts[cant]} ${texts[${act[${mounted}]%%*_}]} ${texts[partition]:-partition}: ${partitions[j]})]}" )
