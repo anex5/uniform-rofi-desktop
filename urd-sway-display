@@ -135,7 +135,7 @@ set_bg_infill() {
     local infills=( "fill" "stretch" "center" "tile" )
     for i in "${!infills[@]}"; do
         enabled=$([[ "${last_infill}" == "${infills[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${infills[i]}]}" "${enabled}" "${icons[displayinfill]}")\n"
+        entries+="$(write_menuentry "${texts[${infills[i]}]^}" "${enabled}" "${icons[display${infills[i]}]}")\n"
         actions+=("change_infill ${index} ${infills[i]}")
         error_msgs+=( "${texts[cantset]} ${texts[background]} ${texts[infills]}" )
     done
@@ -258,7 +258,7 @@ set_backgrounds() {
     entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
     #send_notification "${curr_bg##*.}"
 
-    entries+="$(write_menuentry "${texts[infills]^}: ${texts[$last_infill]}" "false" "${icons[displayinfill]}" "true")\n"
+    entries+="$(write_menuentry "${texts[infills]^}: ${texts[$last_infill]^}" "false" "${icons[displayinfill]}" "true")\n"
     actions+=( "set_bg_infill ${i} ${last_infill}" )
     error_msgs+=( "${texts[cantset]} ${texts[infill]}" )
 

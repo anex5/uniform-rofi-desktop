@@ -64,6 +64,12 @@ icons[displaysync]=$(write_span "&#xf1aed;")
 icons[displayhinting]=$(write_span "&#xf06d6;")
 icons[displaybg]=$(write_span "&#xf1104;")
 icons[displayinfill]=$(write_span "&#xf07fe;")
+
+icons[displaystretch]=$(write_span "&#xf0f2b;")
+icons[displayfill]=$(write_span "&#xf0ef6;")
+icons[displaytile]=$(write_span "&#xf11d9;")
+icons[displaycenter]=$(write_span "&#xeb4c;")
+
 icons[videofile]=$(write_span "&#xf1c8;")
 icons[audiofile]=$(write_span "&#xf1c7;")
 icons[imagefile]=$(write_span "&#xf1c5;")

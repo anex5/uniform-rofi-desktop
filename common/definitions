@@ -78,6 +78,13 @@ bool=(
     [toggle]="true" [select]="false"
 )
 
+declare -A toggle
+toggle=(
+    [on]=off [off]=on
+    [enable]=disable [disable]=enable
+    [false]=true [true]=false
+)
+
 declare -a actions error_msgs confirm nocatch
 
 handle_script_opts() {

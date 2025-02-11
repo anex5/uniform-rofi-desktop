@@ -46,7 +46,7 @@ bt_pair(){
     local device="${1?${texts[missingarg]:-Missing argument} device}"
     shift
     local pair="${*?${texts[missingarg]:-Missing argument} pair}"
-    local btctlpairinfo="$(send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} ${pair})"
+    local btctlpairinfo="$(send_btcmd "${device}" "${COPROC[1]}" "${COPROC[0]}" "${pair}")"
     #local passkey="$( ${GREP} -q "Confirm passkey" <<< "${btctlpairinfo}" && echo "11111" || echo "00000" )"
     #if [ -n ${passkey} ]; then res=$(./urd-confirm -n "${texts[confirmbtpair]:-"Confirm pairing device passkey:"}" "${passkey}")
     #[[ ${res}=="1" ]] && 
@@ -60,22 +60,22 @@ set_device(){
     local curr_discoverable="$( ${GREP} -q "Discoverable: yes" <<< "${bdinfo[${index}]}" && echo "on" || echo "off" )"
     local curr_scanning="$( ${GREP} -q "Discovering: yes" <<< "${bdinfo[${index}]}" && echo "on" || echo "off" )"
 
-    entries=""; actions=(); error_msgs=(); active=""; urgent=""
+    entries=""; actions=(); error_msgs=(); nocath=();
 
     entries+="$(write_menuentry "${texts[power]^}" "${bool[${curr_powered}]}" "${icons[power]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} power $(toggle "${curr_powered}")" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" power toggle["${curr_powered}"]" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[power]}")
     
     entries+="$(write_menuentry "${texts[btscan]^}" "${bool[${curr_scanning}]}" "${icons[search]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} scan $(toggle "${curr_scanning}")" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" scan toggle["${curr_scanning}"]" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[btscan]}")
     
     entries+="$(write_menuentry "${texts[discoverable]^}" "${bool[${curr_discoverable}]}" "${icons[discoverable]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} discoverable $(toggle "${curr_discoverable}")" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" discoverable toggle["${curr_discoverable}"]" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[discoverable]}")
     
     entries+="$(write_menuentry "${texts[pairable]^}" "${bool[${curr_pairable}]}" "${icons[pairable]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} pairable $(toggle "${curr_pairable}")" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" pairable toggle["${curr_pairable}"]" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[pairable]}")
 
     header="${texts[deviceoptions]^} ${device}"
@@ -108,19 +108,19 @@ set_client(){
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_paired[${paired}]}]:-"${toggle_paired[${paired}]}"} ${texts[device]} ${name}")
     
     entries+="$(write_menuentry "${texts[${toggle_connected[$connected]}]^}" "${bool[${connected}]}" "${icons[btconnect]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} ${toggle_connected[${connected}]} ${client}" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" ${toggle_connected[${connected}]} ${client}" )
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_connected[${connected}]}]:-"${toggle_connected[${connected}]}"} ${texts[device]} ${name}")
     
     entries+="$(write_menuentry "${texts[${toggle_trusted[$trusted]}]^}" "${bool[${trusted}]}" "${icons[trust]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} ${toggle_trusted[$trusted]} ${client}" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" ${toggle_trusted[$trusted]} ${client}" )
     error_msgs+=( "${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_trusted[$trusted]}]:-"${toggle_trusted[$trusted]}"} ${texts[device]} ${name}" )
     
     entries+="$(write_menuentry "${texts[${toggle_blocked[$blocked]}]^}" "${bool[${blocked}]}" "${icons[lock]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} ${toggle_blocked[${blocked}]} ${client}" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" ${toggle_blocked[${blocked}]} ${client}" )
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_blocked[${blocked}]}]:-"${toggle_blocked[${blocked}]}"} ${texts[device]} ${name}" )
 
     entries+="$(write_menuentry "${texts[remove]^}" "true" "${icons[trash]}" "true")\n"
-    actions+=( "send_btcmd ${device} ${COPROC[1]} ${COPROC[0]} remove ${client}" )
+    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" remove ${client}" )
     error_msgs+=( "${texts[cantset]^} ${texts[bluetooth]} ${texts[remove]}]:-"remove"} ${texts[device]} ${name}" )
 
     header="${texts[deviceoptions]^} ${name}"
