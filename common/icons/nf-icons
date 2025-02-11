@@ -45,6 +45,7 @@ icons[off]="${icons[cancel]}"
 icons[unmount]="${icons[toggle]}"
 icons[disconnect]="${icons[toggle]}"
 icons[block]="${icons[toggle]}"
+icons[partition]=$(write_span "&#xf0a0;")
 
 icons[USB]=$(write_span "&#xf0553;")
 icons[HDMI]=$(write_span "&#xf0841;")
