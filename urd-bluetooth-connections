@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
-TIMEOUT=5
+TIMEOUT=2
 BTCTL="/usr/bin/bluetoothctl"
 RDEPS+="${BTCTL},"
 source "./common/definitions"
@@ -19,22 +19,45 @@ source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
 theme="./common/themes/vertical_menu.rasi"
 
-coproc ( ${BTCTL} )
+coproc BT ( ${BTCTL}; )
+# Keep file descriptors open
+exec 500<&${BT[0]} 600>&${BT[1]}
+BTCTL_IN=600
+BTCTL_OUT=500
+
+declare -A expect=(
+    [power_on]="Changing power on succeeded"
+    [power_off]="Changing power off succeeded"
+    [scan_on]="Discovery started"
+    [scan_off]="Discovery stopped"
+    [pairable_on]="Changing pairable on succeeded"
+    [pairable_off]="Changing pairable off succeeded"
+    [discoverable_on]="Changing discoverable on succeeded"
+    [discoverable_off]="Changing discoverable off succeeded"
+    [connect]="Connection successful"
+    [disconnect]="Successful disconnected"
+    [trust]="trust succeeded"
+    [untrust]="untrust succeeded"
+    [block]="block succeeded"
+    [unblock]="unblock succeeded"
+    [pair]="Pairing successful"
+    [cancel-pairing]=""
+    [remove]="Device has been removed"
+)
 
 send_btcmd() {
-    local device="${1?${texts[missingarg]:-Missing argument} device}"
-    local coproc_pid="${2?${texts[missingarg]:-Missing argument} coproc_pid}"
-    local coproc_out="${3?${texts[missingarg]:-Missing argument} coproc_out}"
-    shift 3
+    local device="${1?${texts[missingarg]:-Missing argument} device}"; shift
     local cmd="${*?${texts[missingarg]:-Missing argument} cmd}"
     local output=""
-    echo -e "select ${device}" >&"${coproc_pid}"
-    sleep 1
-    echo -e "${cmd}" >&"${coproc_pid}"
-    read -t 1 -u "${coproc_out}" output
 
-    send_notification "${coproc_out} ...${output: -32}"
-    if [[ "${output}" =~ "successful" ]]; then 
+    echo -e "select ${device}" >&${BTCTL_IN}
+    sleep 1
+    echo -e "${cmd}" >&${BTCTL_IN}
+    #sleep 1
+    IFS= read -t ${TIMEOUT} -r -d '' -u ${BTCTL_OUT} output
+
+    #send_notification "${output}"
+    if [[ "${output}" =~ "${expect[${cmd}]}" ]]; then 
         return 0
     else
         return -1
@@ -43,10 +66,9 @@ send_btcmd() {
 
 bt_pair(){
     # TODO : Add possibility to enter passkey if required
-    local device="${1?${texts[missingarg]:-Missing argument} device}"
-    shift
-    local pair="${*?${texts[missingarg]:-Missing argument} pair}"
-    local btctlpairinfo="$(send_btcmd "${device}" "${COPROC[1]}" "${COPROC[0]}" "${pair}")"
+    local device="${1?${texts[missingarg]:-Missing argument} device}"; shift
+    local pair="${@?${texts[missingarg]:-Missing argument} pair}"
+    local btctlpairinfo="$(send_btcmd "${device}" "${pair}")"
     #local passkey="$( ${GREP} -q "Confirm passkey" <<< "${btctlpairinfo}" && echo "11111" || echo "00000" )"
     #if [ -n ${passkey} ]; then res=$(./urd-confirm -n "${texts[confirmbtpair]:-"Confirm pairing device passkey:"}" "${passkey}")
     #[[ ${res}=="1" ]] && 
@@ -63,19 +85,19 @@ set_device(){
     entries=""; actions=(); error_msgs=(); nocath=();
 
     entries+="$(write_menuentry "${texts[power]^}" "${bool[${curr_powered}]}" "${icons[power]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" power toggle["${curr_powered}"]" )
+    actions+=( "send_btcmd ${device} power ${toggle[${curr_powered}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[power]}")
     
     entries+="$(write_menuentry "${texts[btscan]^}" "${bool[${curr_scanning}]}" "${icons[search]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" scan toggle["${curr_scanning}"]" )
+    actions+=( "send_btcmd ${device} scan ${toggle[${curr_scanning}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[btscan]}")
     
     entries+="$(write_menuentry "${texts[discoverable]^}" "${bool[${curr_discoverable}]}" "${icons[discoverable]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" discoverable toggle["${curr_discoverable}"]" )
+    actions+=( "send_btcmd ${device} discoverable ${toggle[${curr_discoverable}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[discoverable]}")
     
     entries+="$(write_menuentry "${texts[pairable]^}" "${bool[${curr_pairable}]}" "${icons[pairable]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" pairable toggle["${curr_pairable}"]" )
+    actions+=( "send_btcmd ${device} pairable ${toggle[${curr_pairable}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[pairable]}")
 
     header="${texts[deviceoptions]^} ${device}"
@@ -108,19 +130,19 @@ set_client(){
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_paired[${paired}]}]:-"${toggle_paired[${paired}]}"} ${texts[device]} ${name}")
     
     entries+="$(write_menuentry "${texts[${toggle_connected[$connected]}]^}" "${bool[${connected}]}" "${icons[btconnect]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" ${toggle_connected[${connected}]} ${client}" )
+    actions+=( "send_btcmd ${device} ${toggle_connected[${connected}]} ${client}" )
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_connected[${connected}]}]:-"${toggle_connected[${connected}]}"} ${texts[device]} ${name}")
     
     entries+="$(write_menuentry "${texts[${toggle_trusted[$trusted]}]^}" "${bool[${trusted}]}" "${icons[trust]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" ${toggle_trusted[$trusted]} ${client}" )
+    actions+=( "send_btcmd ${device} ${toggle_trusted[$trusted]} ${client}" )
     error_msgs+=( "${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_trusted[$trusted]}]:-"${toggle_trusted[$trusted]}"} ${texts[device]} ${name}" )
     
     entries+="$(write_menuentry "${texts[${toggle_blocked[$blocked]}]^}" "${bool[${blocked}]}" "${icons[lock]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" ${toggle_blocked[${blocked}]} ${client}" )
+    actions+=( "send_btcmd ${device} ${toggle_blocked[${blocked}]} ${client}" )
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_blocked[${blocked}]}]:-"${toggle_blocked[${blocked}]}"} ${texts[device]} ${name}" )
 
     entries+="$(write_menuentry "${texts[remove]^}" "true" "${icons[trash]}" "true")\n"
-    actions+=( "send_btcmd ${device} \"${COPROC[1]}\" \"${COPROC[0]}\" remove ${client}" )
+    actions+=( "send_btcmd ${device} remove ${client}" )
     error_msgs+=( "${texts[cantset]^} ${texts[bluetooth]} ${texts[remove]}]:-"remove"} ${texts[device]} ${name}" )
 
     header="${texts[deviceoptions]^} ${name}"
@@ -170,6 +192,6 @@ done
 handle_rofi
 
 # Close the coprocess
-exec {COPROC[1]}>&-
-exec {COPROC[0]}<&-
+exec {BTCTL_IN}>&-
+exec {BTCTL_OUT}<&-
 
