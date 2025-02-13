@@ -24,7 +24,7 @@ act[select]="${WPCTL} set-default"
 act[toggle]="${WPCTL} set-mute"
 
 IFS=$NF read -d '' -a devices <<< "$(${WPCTL} status | ${SED} -n '/ ├─ Sources:/,/ │  $/ {//! p}' | ${SED} -n 's/^ │  \(.*\)$/\1/p' )"
-[[ ${#devices[@]} -eq 0 ]] && die 1 "${texts[noaudiosources]:-"No audio device sources"}"
+[[ ${#devices[@]} -eq 0 ]] && die -1 "${texts[noaudiosources]:-"No audio device sources"}"
 
 for i in "${!devices[@]}"; do
     str="${devices[i]}"

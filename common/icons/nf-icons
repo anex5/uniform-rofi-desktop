@@ -3,6 +3,7 @@
 
 icon_color='#242424' 
 icon_font='Ubuntu Nerd Font'
+
 declare -a branch
 branch[0]="├"
 branch[1]="└"
@@ -13,7 +14,7 @@ write_span(){
   echo "<span fallback='false' size='medium' foreground='${icon_color}' face='${icon_font}' ><span ${2}>${1} </span></span>"
 }
 
-declare -A icons
+declare -A -x icons
 icons[power]=$(write_span "&#xf011;")
 icons[poweroff]="${icons[power]}"
 icons[reboot]=$(write_span "&#xf01e;")
@@ -23,7 +24,6 @@ icons[suspend]=$(write_span "&#xe370;")
 icons[logout]=$(write_span "&#xf08b;")
 icons[hibernate]=$(write_span "&#x2b58;")
 icons[lock]=$(write_span "&#xf023;")
-
 icons[airplane]=$(write_span "&#xf001d;")
 icons[confirmed]="<span font='${icon_font}' foreground='#33ff33' >&#xf0791; </span>"
 icons[toggle]="<span font='${icon_font}' foreground='#33ff33' >&#xf00c; </span>"

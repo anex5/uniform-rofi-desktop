@@ -91,16 +91,16 @@ handle_script_opts() {
     while [ "$#" -ge 1 ]; do
         case "${1?${texts[missingarg]:-Missing argument} script options}" in
             -i|--no-icons) 
-                unset icons
+                unset -f icons
                 rofiargs+=" -no-show-icons"
                 default_themestr+=" configuration { show-icons: false; }" 
             ;;
             -l|--lang) 
                 if [ -f "./common/langs/${2?${texts[missingarg]:-Missing argument} --lang}" ]; then
-                    unset texts
+                    unset -f texts
                     common_usage=''
                     default_lang="${2}"
-                    source ./common/langs/"${2}" || die 1 "${texts[nofile]:-"No such file "} ./common/langs/$2"
+                    source ./common/langs/"${2}" || die -1 "${texts[nofile]:-"No such file "} ./common/langs/${2}"
                 fi
                 shift
   	        ;;
@@ -114,7 +114,7 @@ handle_script_opts() {
 	        -m|--monitor) 
 	            if [[ "${!anchors[@]}" != *${2?${texts[missingarg]:-Missing argument} --monitor}* ]]; then
 		            warn "Invalid position: ${2}"
-		            die 1 "Try e.g. 'northwest' or 'center' instead"
+		            die -1 "Try e.g. 'northwest' or 'center' instead"
 	            fi
 	            rofiargs+=" -m -3"
 	            default_themestr+=" window { anchor: ${anchors[${2}]}; location: center; } "
@@ -123,7 +123,7 @@ handle_script_opts() {
 	        -w|--window)
 	            if [[ "${!anchors[@]}" != *${2?${texts[missingarg]:-Missing argument} --window}* ]]; then
 		            warn "Invalid position: ${2}"
-		            die 1 "Try e.g. 'northwest' or 'center' instead"
+		            die -1 "Try e.g. 'northwest' or 'center' instead"
 	            fi
 	            rofiargs+=" -m -2"
 	            default_themestr+=" window { anchor: ${2}; location: ${2}; x-offset: ${xoffsets[${2}]}em; y-offset: ${yoffsets[${2}]}em; } "
@@ -168,7 +168,7 @@ handle_rofi() {
         "1[0-9]"|"2[0-8]") # run new instance on custom key
 	        ./${prog} ${args}
         ;;
-        "*")  die ${rofi_ret} "${texts[error]:-"Error: "} ${rofi_ret}"
+        "*")  die -1 ${rofi_ret} "${texts[error]:-"Error: "} ${rofi_ret}"
         ;;
         esac
     else
@@ -207,13 +207,13 @@ handle_rofi() {
                 #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
             fi
 
-		    send_notification "Selected entry... $ROFI_INFO"
+		    #send_notification "Selected entry... $ROFI_INFO"
         ;;
         "2") # rofi: selected custom entry
             : #warn "Selected custom-entry..."
         ;;
         *) # rofi: selected unknown entry
-	        die "Unknown entry selected (this is a bug): $1"
+	        die -1 "Unknown entry selected (this is a bug): $1"
         ;;
         esac
     fi
@@ -227,10 +227,10 @@ warn() {
 
 # write error and exit
 die() {
-    local retval=0
+    local retval=0 # don touch. if statement is urgent here
     if [ -z "${1//[0-9-]/}" ]; then retval=${1}; shift; fi
     if [[ -n "${@}" ]]; then msg="${@}"; else msg="${texts[pogramterminated]^} return = ${retval}"; fi
-	if [ ${retval} -ne 0 ]; then send_notification "${msg^}"; fi
+	if [ ${retval} -lt 0 ]; then send_notification "${msg^}"; fi
 	warn "${msg^}"
 	exit ${retval}
 }
@@ -317,7 +317,9 @@ run_menuentry_action() {
         else
             catch_posix catch_output catch_error ${action}
             retcode=$?
-            [ ${retcode} -ne 0 ] && send_notification "${error_msg}" "${catch_error}"
+            if [ ${retcode} -ne 0 ] && [ -n "${error_msg}" ]; then 
+                send_notification "${error_msg}" "${catch_error}"
+            fi
             #warn "Action retcode: ${retcode}, Action: ${action}, Output: ${catch_output}, Error: ${catch_error}, Error msg: ${error_msg}"
         fi
     fi

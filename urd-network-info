@@ -62,7 +62,6 @@ for i in ${!netdev[@]}; do
     entries+="$(write_menuentry "${type^}\t${name} ${connection//[$'\t\r\n']}" "${enabled}" "${icons[${type%%-*}]:-""}")\n"
     actions+=( "show_netdev_info ${name}" )
     nocatch+=( true )
-    error_msgs+=( "${texts[cant]}^} ${texts[shownetdevinfo]}" )
 done
 
 handle_rofi
