@@ -26,11 +26,15 @@ rofiargs="${default_rofiargs} -no-custom -format i "
 theme="./common/themes/vertical_menu.rasi"
 header="${texts[header_sway_display]:-Heder not set (this is a bug)}"
 
-declare -A switch
+declare -A switch power
 switch=( 
     [true]=off [false]=on
     [enabled]=off [disabled]=on
 )
+power=(
+    [enabled]=on [disabled]=off
+)
+
 default_transform(){
     local transform="${1?${texts[missingarg]:-"Missing argument transform"}}"
     [[ "${transform}" == "normal" ]] && echo true || echo false
@@ -132,7 +136,7 @@ change_bg() {
     local bg="${@?${texts[missingarg]:-"Missing argument bg"}}"
     IFS='|' read -d '' -r bgname bginfill bgcolor null <<< "${last_bg[${index}]}|"
     local display="${displays[index]}"
-    send_notification "Attempt to set background: ${bg##*.}" "On display ${display#* }"
+    #send_notification "Attempt to set background: ${bg##*.}" "On display ${display#* }"
     case "${bg##*.}" in
         "jpg"|"jpeg"|"bmp"|"png"|"webp")
             killall mpvpaper
@@ -239,7 +243,7 @@ set_bg_infill() {
         enabled=$([[ "${bginfill}" == "${infills[i]}" ]] && echo true || echo false )
         entries+="$(write_menuentry "${texts[${infills[i]}]^}" "${enabled}" "${icons[display${infills[i]}]}")\n"
         actions+=("change_infill ${index} ${infills[i]}")
-        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[background]} ${texts[infill]}" )
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[background]} ${texts[infills]}" )
     done
     header="${texts[availiable]} ${texts[options]} ${texts[infills]}"
     theme="./common/themes/vertical_menu.rasi"
@@ -269,19 +273,19 @@ save_settings() {
     
     local config_path="${HOME}/.config/sway"
     local config_name="${config_path}/urd-sway-display-${display#* }"
-    local config_included="$(${SWAYMSG} -t get_config --raw | ${GREP} -q "include ./${config_name##*/}" && echo true || echo false)"
-    [ ${config_included} ] && echo -e "include ./${config_name##*/}" >> "${config_path}/config"
+    local config_included="$(${GREP} -q "include ${config_path}/'${config_name##*/}'" "${config_path}/config" && echo true || echo false)"
+    test ${config_included} || echo -e "include ${config_path}/'${config_name##*/}'" >> "${config_path}/config"
         
-    echo -e "output \"${display#* }\" {" >> "${config_name}"
+    echo -e "output \"${display#* }\" {" > "${config_name}"
     echo -e "    mode ${curr_modes[$index]:0:-3}.${curr_modes[$index]: -3}Hz" >> "${config_name}"
     echo -e "    bg ${bgname} ${bginfill} #${bgcolor}" >> "${config_name}"
-    echo -e "    position ${positions[$index]}" >> "${config_name}"
+    echo -e "    position ${positions[$index]//,/}" >> "${config_name}"
     echo -e "    scale ${scales[$index]}" >> "${config_name}"
     echo -e "    transform ${transforms[$index]}" >> "${config_name}"
     echo -e "    subpixel ${hintings[$index]}" >> "${config_name}"
-    echo -e "    adaptive_sync ${adsyncs[$index]}" >> "${config_name}"
-
+    echo -e "    adaptive_sync ${power[${adsyncs[$index]}]}" >> "${config_name}"
     echo -e "}" >> "${config_name}"
+
     return $?
 }
 

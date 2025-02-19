@@ -140,6 +140,7 @@ texts=(
 [right]="right"
 [top]="top"
 [bottom]="bottom"
+[display]="display"
 [displaytransform_normal]="normal"
 [displaytransform_flipped]="flipped"
 [displaytransform_90]="rotate 90 degrees"
