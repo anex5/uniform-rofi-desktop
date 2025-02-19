@@ -25,7 +25,6 @@ rofiargs="${default_rofiargs} -no-custom -format i "
 # default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
 theme="./common/themes/vertical_menu.rasi"
 header="${texts[header_sway_display]:-Heder not set (this is a bug)}"
-fallback_color="#080840"
 
 declare -A switch
 switch=( 
@@ -33,20 +32,30 @@ switch=(
     [enabled]=off [disabled]=on
 )
 default_transform(){
-    local transform="${1?${texts[missingarg]:-"Missing argument dransform"}}"
+    local transform="${1?${texts[missingarg]:-"Missing argument transform"}}"
     [[ "${transform}" == "normal" ]] && echo true || echo false
+}
+
+mklink() {
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
+    IFS='|' read -d '' -r bgname bginfill bgcolor null <<< "${last_bg[${index}]}|"
+    local display="${displays[index]}"
+    #send_notification "name: ${bgname}, infill: ${bginfill}, color: ${bgcolor}"
+    ${FIND} "${HOME}/.local/state" -type l -name "lastbg_${display#* }_*" -exec rm {} \;
+    ln -snf "${bgname}" "${HOME}/.local/state/lastbg_${display#* }_${bginfill}_${bgcolor}"
+    return $?
 }
 
 set_mode() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
     entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
-    IFS=$NF read -r -d '' -a modes <<< "$($JQ '.[] | .modes[] |  [.width, "x", .height, "@", .refresh] | join("")' <<< ${outputs})"
+    IFS=$NF read -r -d '' -a modes <<< "$($JQ '.['${index}'] | .modes[] |  [.width, "x", .height, "@", .refresh] | join("")' <<< ${outputs})"
     for i in "${!modes[@]}"; do
         enabled=$([[ "${curr_modes[index]}" == "${modes[i]}" ]] && echo true || echo false )
         entries+="$(write_menuentry "${modes[i]:0:-3}.${modes[i]: -3}Hz" "${enabled}" "${icons[displaymode]}")\n"
         actions+=( "${SWAYMSG} output \"${display#* }\" mode \"${modes[$i]:0:-3}.${modes[$i]: -3}Hz\"" )
-        error_msgs+=( "${texts[cantset]} ${texts[dispaly]} ${texts[displaymode]}" )
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[displaymode]}" )
     done
     #header="${texts[header_sway_display_modes]:-"Availiable display modes"}"
     header="${texts[availiable]} ${texts[options]} ${texts[modes]}"
@@ -63,7 +72,7 @@ set_position() {
     local curr_pos="${positions[index]%%,*}, ${positions[index]##*, }"
     pos=$(./urd-prompt -n "${texts[display_position]:-"Enter display position coordinates"} (${curr_pos})" -p "${texts[displayposition]^}" )
     rofi_ret="$?"
-    test ${rofi_ret} -eq 0 && run_menuentry_action "${SWAYMSG} output \"${display#* }\" position \"${pos}\"" "${texts[cantset]} ${texts[dispaly]} ${texts[position]}"
+    test ${rofi_ret} -eq 0 && run_menuentry_action "${SWAYMSG} output \"${display#* }\" position \"${pos}\"" "${texts[cantset]} ${texts[display]} ${texts[position]}"
     return $?
 }
 
@@ -74,7 +83,7 @@ set_scale() {
     local curr_scale="${scales[index]}"
     scale="$(./urd-prompt -n "${texts[display_scale]:-"Enter display scale multiplier"}" -p "${texts[displayscale]^}" )"
     rofi_ret="$?"
-    test ${rofi_ret} -eq 0 && run_menuentry_action "${SWAYMSG} output \"${display#* }\" scale \"${scale}\"" "${texts[cantset]} ${texts[dispaly]} ${texts[scale]}"
+    test ${rofi_ret} -eq 0 && run_menuentry_action "${SWAYMSG} output \"${display#* }\" scale \"${scale}\"" "${texts[cantset]} ${texts[display]} ${texts[scale]}"
     return $?
 }
 
@@ -89,7 +98,7 @@ set_transform() {
         enabled=$([[ "${curr_trans}" == "${trans[i]}" ]] && echo true || echo false )
         entries+="$(write_menuentry "${texts[displaytransform_${trans[$i]}]}" "${enabled}" "${icons[displaytransform]}")\n"
         actions+=( "${SWAYMSG} output \"${display#* }\" transform ${trans[i]}" )
-        error_msgs+=( "${texts[cantset]} ${texts[dispaly]} ${texts[transform]}" )
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[transform]}" )
     done
     header="${texts[availiable]} ${texts[options]} ${texts[transform]}"
     theme="./common/themes/vertical_menu.rasi"
@@ -102,47 +111,16 @@ set_hinting() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
     local curr_hint="${hintings[index]}"
-    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=()
+    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
     declare -a hints
     local hints=("rgb" "bgr" "vrgb" "vbgr" "none")
     for i in "${!hints[@]}"; do
         enabled=$([[ "${curr_hint}" == "${hints[i]}" ]] && echo true || echo false )
         entries+="$(write_menuentry "${texts[${hints[i]}]}" "${enabled}" "${icons[displayhinting]}")\n"
         actions+=( "${SWAYMSG} output \"${display#* }\" subpixel ${hints[$i]}" )
-        error_msgs+=( "${texts[cantset]} ${texts[hinting]}" )
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[hinting]}" )
     done
     header="${texts[availiable]} ${texts[hinting]}"
-    theme="./common/themes/vertical_menu.rasi"
-    
-    handle_rofi
-    return $?
-}
-
-change_infill() {
-    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
-    shift 1
-    local infill="${@?${texts[missingarg]:-"Missing argument bg"}}"
-    local display="${displays[index]}"
-    #send_notification "Attempt to set infill: ${infill}" "On display ${display#* }"
-    # Use full display name i.e. ${display#* } to override default value in sway config
-    ${SWAYMSG} output \"${display#* }\" bg \"${curr_bg}\" ${infill} ${fallback_color} && ln -snf "${infill}" "${HOME}/.local/state/lastinfill"
-
-    return $?
-}
-
-set_bg_infill() {
-    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
-    local display="${displays[index]}"
-    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
-    declare -a hints
-    local infills=( "fill" "stretch" "center" "tile" )
-    for i in "${!infills[@]}"; do
-        enabled=$([[ "${last_infill}" == "${infills[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${infills[i]}]^}" "${enabled}" "${icons[display${infills[i]}]}")\n"
-        actions+=("change_infill ${index} ${infills[i]}")
-        error_msgs+=( "${texts[cantset]} ${texts[background]} ${texts[infills]}" )
-    done
-    header="${texts[availiable]} ${texts[options]} ${texts[infills]}"
     theme="./common/themes/vertical_menu.rasi"
     
     handle_rofi
@@ -152,42 +130,44 @@ set_bg_infill() {
 change_bg() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
     local bg="${@?${texts[missingarg]:-"Missing argument bg"}}"
+    IFS='|' read -d '' -r bgname bginfill bgcolor null <<< "${last_bg[${index}]}|"
     local display="${displays[index]}"
-        #send_notification "Attempt to set background: ${bg}" "On display ${display#* }"
+    send_notification "Attempt to set background: ${bg##*.}" "On display ${display#* }"
     case "${bg##*.}" in
         "jpg"|"jpeg"|"bmp"|"png"|"webp")
             killall mpvpaper
             # Use full display name i.e. ${display#* } to override default value in sway config
-            ${SWAYMSG} output \"${display#* }\" bg \"${bg}\" fill ${fallback_color} && ln -snf "${bg//\#}" "${HOME}/.local/state/lastbg"
+            last_bg[${index}]="${bg}|${bginfill}|${bgcolor}"
+            ${SWAYMSG} output \"${display#* }\" bg \"${bg}\" \"${bginfill}\" \"#${bgcolor}\" && mklink ${index}
         ;;
         "avi"|"mp4"|"webm")
             killall swaybg
             killall mpvpaper
+            last_bg[${index}]="${bg}|${bginfill}|${bgcolor}"
             # Use port display name i.e. ${display%% *} as mpvpaper do not understand full display name
-            ${SWAYMSG} exec -- ${MPVPAPER} ${display%% *} ${bg} && ln -snf "${bg//\#}" "${HOME}/.local/state/lastbg"
+            ${SWAYMSG} exec -- ${MPVPAPER} ${display%% *} ${bg} && mklink ${index}
         ;;
-        \#*)
+        \#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F])
             killall mpvpaper
-            ${SWAYMSG} output \"${display#* }\" bg \"${bg}\" solid_color && ln -snf "${bg//\#}" "${HOME}/.local/state/lastbg"
+            last_bg[${index}]="${texts[varunset]}|${bginfill}|${bg//#}"
+            ${SWAYMSG} output \"${display#* }\" bg \"${bg}\" solid_color && mklink ${index}
     esac
     return $?
 }
 
 set_bg_image() {
-    local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
-    local curr_bg="${@?${texts[missingarg]:-"Missing argument curr_bg"}}"
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
-    local curr_mode="${curr_modes[index]}"
     entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
     declare -a bgs
     IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
         -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)"
     for f in "${bgs[@]}"; do
-        current="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo true || echo false )"
+        current="$([[ " ${f} " =~ " ${last_bg[$index]%%|*} " ]] && echo true || echo false )"
         entries+="$(write_menuentry "${f##*/}" "${current}" "${f}")\n"
         # Use full display name i.e. ${display#* } to override default value in sway config
         actions+=("change_bg ${index} ${f}")
-        error_msgs+=( "${texts[cantset]} ${texts[dispaly]} ${texts[image]} ${texts[background]}" )
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[image]} ${texts[background]}" )
     done
     header="${texts[availiable]^} ${texts[display]} ${texts[backgrounds]}"
     theme="./common/themes/vertical_menu.rasi"
@@ -196,41 +176,37 @@ set_bg_image() {
 }
 
 set_bg_video() {
-    local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
-    local curr_bg="${@?${texts[missingarg]:-"Missing argument curr_bg"}}"
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
-    local curr_mode="${curr_modes[index]}"
     entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
     declare -a bgs
     IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
         -name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
     for f in "${bgs[@]}"; do
-        current="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo true || echo false )"
+        current="$([[ " ${f} " =~ " ${last_bg[$index]%% *} " ]] && echo true || echo false )"
         entries+="$(write_menuentry "${f##*/}" "${current}" "${icons[videofile]}")\n"
         actions+=( "change_bg ${index} ${f}" )
-        error_msgs+=( "${texts[cantset]} ${texts[dispaly]} ${texts[video]} ${texts[background]}" )
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[video]} ${texts[background]}" )
     done
-    header="${texts[availiable]^} ${texts[dispaly]} ${texts[video]} ${texts[backgrounds]}"
+    header="${texts[availiable]^} ${texts[display]} ${texts[video]} ${texts[backgrounds]}"
     theme="./common/themes/vertical_menu.rasi"
     handle_rofi
     return $?
 }
 
 set_bg_solid_color(){
-    local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
-    local curr_bg="${@?${texts[missingarg]:-"Missing argument curr_bg"}}"
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
-    local curr_mode="${curr_modes[index]}"
     entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
     declare -a colors
     colors=("#990000" "#009900" "#000099" "#000000" "#999999")
     for f in "${colors[@]}"; do
-        current="$([[ " ${f} " =~ " ${curr_bg} " ]] && echo true || echo false )"
+        current="$([[ " ${f} " =~ " ${last_bg[${index}]%%|*} " ]] && echo true || echo false )"
         entries+="$(write_menuentry "${f}" "${current}" "<span background=\"${f}\">\U3000</span>")\n"
         actions+=( "change_bg ${index} ${f}" )
-        error_msgs+=( "${texts[cantset]} ${texts[dispaly]} ${texts[solidcolor]} ${texts[background]}" )
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[solidcolor]} ${texts[background]}" )
     done
-    header="${texts[availiable]} ${texts[display]} ${texts[colors]}"
+    header="${texts[availiable]^} ${texts[display]} ${texts[colors]}"
     theme="./common/themes/vertical_menu.rasi"
     handle_rofi
     return $?
@@ -246,32 +222,91 @@ is_image(){
     [[ " jpg jpeg bmp png webp tiff " =~ " ${file##*.} " ]] && echo true || echo false
 }
 
-is_color(){
+is_solid(){
     local file="${@?${texts[missingarg]:-"Missing argument file"}}"
-    [[ "#${file}" == "${fallback_color}" ]] && echo true || echo false
+    [[ "${file}" == "${texts[varunset]}" ]] && echo true || echo false
+}
+
+set_bg_infill() {
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
+    local display="${displays[index]}"
+    IFS='|' read -r -d '\0' bgname bginfill bgcolor <<< "${last_bg[${index}]}"
+    #send_notification "bg: ${last_bg[$index]} name: ${bgname} infill: ${bginfill} color: ${bgcolor}"
+    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    declare -a hints
+    local infills=( "fill" "stretch" "center" "tile" )
+    for i in "${!infills[@]}"; do
+        enabled=$([[ "${bginfill}" == "${infills[i]}" ]] && echo true || echo false )
+        entries+="$(write_menuentry "${texts[${infills[i]}]^}" "${enabled}" "${icons[display${infills[i]}]}")\n"
+        actions+=("change_infill ${index} ${infills[i]}")
+        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[background]} ${texts[infill]}" )
+    done
+    header="${texts[availiable]} ${texts[options]} ${texts[infills]}"
+    theme="./common/themes/vertical_menu.rasi"
+    
+    handle_rofi
+    return $?
+}
+
+change_infill() {
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
+    local infill="${@?${texts[missingarg]:-"Missing argument infill"}}"
+    local display="${displays[${index}]}"
+    #send_notification "Attempt to set infill: ${infill}" "On display ${display#* } bg: ${last_bg[$index]##*|}"
+    # Use full display name i.e. ${display#* } to override default value in sway config
+    last_bg[${index}]="${last_bg[$index]%%|*}|${infill}|${last_bg[$index]##*|}"
+    ${SWAYMSG} output \"${display#* }\" bg \"${last_bg[$index]%%|*}\" \"${infill}\" \"#${last_bg[$index]##*|}\" && mklink ${index}
+
+    return $?
+}
+
+save_settings() {
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
+    local display="${displays[${index}]}"
+    #send_notification "Attempt to save settings: ${display}" "On display ${display#* } bg: ${last_bg[$index]##*|}"
+    # Use full display name i.e. ${display#* } to override default value in sway config
+    IFS='|' read -r -d '\0' bgname bginfill bgcolor null <<< "${last_bg[${index}]}|"
+    
+    local config_path="${HOME}/.config/sway"
+    local config_name="${config_path}/urd-sway-display-${display#* }"
+    local config_included="$(${SWAYMSG} -t get_config --raw | ${GREP} -q "include ./${config_name##*/}" && echo true || echo false)"
+    [ ${config_included} ] && echo -e "include ./${config_name##*/}" >> "${config_path}/config"
+        
+    echo -e "output \"${display#* }\" {" >> "${config_name}"
+    echo -e "    mode ${curr_modes[$index]:0:-3}.${curr_modes[$index]: -3}Hz" >> "${config_name}"
+    echo -e "    bg ${bgname} ${bginfill} #${bgcolor}" >> "${config_name}"
+    echo -e "    position ${positions[$index]}" >> "${config_name}"
+    echo -e "    scale ${scales[$index]}" >> "${config_name}"
+    echo -e "    transform ${transforms[$index]}" >> "${config_name}"
+    echo -e "    subpixel ${hintings[$index]}" >> "${config_name}"
+    echo -e "    adaptive_sync ${adsyncs[$index]}" >> "${config_name}"
+
+    echo -e "}" >> "${config_name}"
+    return $?
 }
 
 set_backgrounds() {
-    local i="${1?${texts[missingarg]:-"Missing argument index"}}"
-    local display="${displays[i]}"
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"
+    local display="${displays[index]}"
     entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
-    #send_notification "${curr_bg##*.}"
+    infill="$(cut -d'|' -f 2 <<< "${last_bg[${index}]}")"
+    #send_notification "infill: ${infill} bg: ${last_bg[${index}]%%|*}"
 
-    entries+="$(write_menuentry "${texts[infills]^}: ${texts[$last_infill]^}" "false" "${icons[displayinfill]}" "true")\n"
-    actions+=( "set_bg_infill ${i} ${last_infill}" )
-    error_msgs+=( "${texts[cantset]} ${texts[background]} ${texts[infill]}" )
+    entries+="$(write_menuentry "${texts[infills]^}: ${texts[${infill}]^}" "false" "${icons[displayinfill]}" "true")\n"
+    actions+=( "set_bg_infill ${i}" )
+    error_msgs+=( "" ) #${texts[cantset]} ${texts[background]} ${texts[infill]}" )
 
-    entries+="$(write_menuentry "${texts[solidcolor]^}" "$(is_color ${curr_bg})" "<span background=\"${fallback_color}\">\U3000</span>" "true")\n"
-    actions+=( "set_bg_solid_color ${i} ${curr_bg}" )
-    error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[solidcolor]} ${texts[background]}" )
+    entries+="$(write_menuentry "${texts[solidcolor]^}" "$(is_solid ${last_bg[${index}]%%|*})" "<span background=\"#${last_bg[$index]##*|}\">\U3000</span>" "true")\n"
+    actions+=( "set_bg_solid_color ${i}" )
+    error_msgs+=( "" ) #${texts[cantset]} ${texts[display]} ${texts[solidcolor]} ${texts[background]}" )
     
-    entries+="$(write_menuentry "${texts[image]^}" "$(is_image ${curr_bg})" "${icons[imagefile]}" "true")\n"
-    actions+=( "set_bg_image ${i} ${curr_bg}" )
-    error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[image]} ${texts[background]}" )
+    entries+="$(write_menuentry "${texts[image]^}" "$(is_image ${last_bg[${index}]%%|*})" "${icons[imagefile]}" "true")\n"
+    actions+=( "set_bg_image ${i}" )
+    error_msgs+=( "" ) #${texts[cantset]} ${texts[display]} ${texts[image]} ${texts[background]}" )
     
-    entries+="$(write_menuentry "${texts[video]^}" "$(is_video ${curr_bg})" "${icons[videofile]}" "true")\n"
-    actions+=( "set_bg_video ${i} ${curr_bg}" )
-    error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[video]} ${texts[background]}" )
+    entries+="$(write_menuentry "${texts[video]^}" "$(is_video ${last_bg[${index}]%%|*})" "${icons[videofile]}" "true")\n"
+    actions+=( "set_bg_video ${i}" )
+    error_msgs+=( "" ) #${texts[cantset]} ${texts[display]} ${texts[video]} ${texts[background]}" )
 
     header="${texts[availiable]} ${texts[display]} ${texts[backgrounds]}"
     theme="./common/themes/vertical_menu.rasi"
@@ -288,8 +323,9 @@ set_display() {
     entries+="$(write_menuentry "${texts[${switch[${enabled[$i]}]}]^}" "${enabled[$i]}" "${icons[power]}" "true")\n"
     actions+=("${SWAYMSG} output \"${display#* }\" toggle")
     error_msgs+=("${texts[cantset]} ${texts[displayactive]}")
-    confirm+=(true)
+    confirm+=( true )
     
+    if ${enabled[$i]}; then
     entries+="$(write_menuentry "${texts[displaymode]^}: ${curr_modes[i]:0:-3},${curr_modes[$i]: -3}" "false" "${icons[displaymode]}" "true")\n"
     actions+=( "set_mode ${i}" )
     error_msgs+=("")
@@ -318,9 +354,14 @@ set_display() {
     #actions+=("swaymsg output ${displays[i]%% *} render_bit_depth ${hdr[${hdrs[i]}]}")
     #error_msgs+=("${texts[cantset]} ${texts[render_bit_depth]}")
     
-    entries+="$(write_menuentry "${texts[backgrounds]^}" "$([[ "${curr_bg}" == "${texts[varunset]}" ]] && echo false || echo true)" "${icons[displaybg]}" "true")\n"
+    entries+="$(write_menuentry "${texts[backgrounds]^}" "$([[ "${last_bg[${i}]%%|*}" == "${texts[varunset]}" ]] && echo false || echo true)" "${icons[displaybg]}" "true")\n"
     actions+=( "set_backgrounds ${i}" )
     error_msgs+=("")
+
+    entries+="$(write_menuentry "${texts[save]^} ${texts[settings]}" "false" "${icons[save]}" "true")\n"
+    actions+=( "save_settings ${i}" )
+    error_msgs+=("")
+    fi
 
     header="${texts[availiable]} ${texts[display]} ${texts[options]} ${display}"
     theme="./common/themes/vertical_menu.rasi"
@@ -328,6 +369,8 @@ set_display() {
     handle_rofi
     return $?
 }
+
+declare -a last_bg
 
 outputs="$(${SWAYMSG} -r -t get_outputs)"
 IFS=$NF read -d '\0' -r -a displays <<< "$(${JQ} '.[] | [.name, .make, .model, .serial] | join(" ")' <<< ${outputs})"
@@ -338,15 +381,17 @@ IFS=$NF read -d '\0' -r -a transforms <<< "$(${JQ} '.[] | .transform' <<< ${outp
 IFS=$NF read -d '\0' -r -a adsyncs <<< "$(${JQ} '.[] | .adaptive_sync_status' <<< ${outputs})"
 IFS=$NF read -d '\0' -r -a hintings <<< "$(${JQ} '.[] | .subpixel_hinting' <<< ${outputs})"
 IFS=$NF read -d '\0' -r -a enabled <<< "$(${JQ} '.[] | .active' <<< ${outputs})"
-#IFS=$NF read -d '' -a hdrs <<< not implemented yet <<< ${outputs})"
-curr_bg="$(readlink ${HOME}/.local/state/lastbg || ${texts[varunset]})"
-last_infill="$(readlink ${HOME}/.local/state/lastinfill || ${texts[varunset]})"
+#IFS=$NF read -d '\0' -a hdrs <<< not implemented yet <<< ${outputs})"
 
-[ -a "${curr_bg}" ] || fallback_color="#${curr_bg}"
 [ ${#displays[@]} -eq 0 ] && die -1 "${texts[nodisplays]:-"No displays found"}"
 
 for i in "${!displays[@]}"; do
-    #warn "displays: ${displays[i]%% *} enabled: ${enabled[i]}"
+    link_name="$(${FIND} ${HOME}/.local/state -type l -name "lastbg_${displays[i]#* }_*" | tail -n1 )"
+    link_name=${link_name:-"lastbg_${displays[i]#* }_tile_111130"}
+    color="$(cut -d'_' -f 4 <<< "${link_name}")"
+    infill="$(cut -d'_' -f 3 <<< "${link_name}")"
+    last_bg+=( "$(readlink -q "${link_name}" 2>/dev/null || echo -e "${texts[varunset]}")|${infill}|${color}" )
+    #warn "bg: ${last_bg[i]} infill: ${infill} color: ${color}"
     entries+="$(write_menuentry "${displays[i]}" "${enabled[i]}" "${icons[${displays[i]%%-*}]}")\n"
     actions+=( "set_display ${i}" )
     confirm+=( false )

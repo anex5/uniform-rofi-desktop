@@ -70,6 +70,7 @@ icons[displayfill]=$(write_span "&#xf0ef6;")
 icons[displaytile]=$(write_span "&#xf11d9;")
 icons[displaycenter]=$(write_span "&#xeb4c;")
 
+icons[save]=$(write_span "&#xeb4b;")
 icons[videofile]=$(write_span "&#xf1c8;")
 icons[audiofile]=$(write_span "&#xf1c7;")
 icons[imagefile]=$(write_span "&#xf1c5;")
