@@ -19,7 +19,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 "
 # parse options
 
-handle_script_opts "$@"
+handle_common_opts "$@"
 
 rofiargs="${default_rofiargs} -no-custom -format i "
 # default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
@@ -264,6 +264,37 @@ change_infill() {
     return $?
 }
 
+is_saved() {
+    local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
+    local display="${displays[${index}]}"
+    local config_path="${HOME}/.config/sway"
+    local config_name="${config_path}/urd-sway-display-${display#* }"
+
+    local saved_mode=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*mode \(.*Hz\)$|\1|p" "${config_name}")
+    local saved_bg=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*bg \(.*\)$|\1|p" "${config_name}")
+    local saved_position=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*position \(.*\)$|\1|p" "${config_name}")
+    local saved_scale=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*scale \(.*\)$|\1|p" "${config_name}")
+    local saved_transform=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*transform \(.*\)$|\1|p" "${config_name}")
+    local saved_subpixel=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*subpixel \(.*\)$|\1|p" "${config_name}")
+    local saved_adaptive_sync=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*adaptive_sync \(.*\)$|\1|p" "${config_name}")
+
+    #send_notification "$saved_mode | $saved_bg | $saved_position | $saved_scale | $saved_transform | $saved_subpixel | $saved_adaptive_sync"
+    #send_notification "${saved_bg//#/} ${last_bg[$index]//|/ }"
+
+    if \
+        [[ "${saved_bg//#/}" == "${last_bg[$index]//|/ }" ]] &&\
+        [[ "${saved_mode}" == "${curr_modes[$index]:0:-3}.${curr_modes[$index]: -3}Hz" ]] &&\
+        [[ "${saved_position}" == "${positions[$index]//,/}" ]] &&\
+        [[ "${saved_scale}" == "${scales[$index]}" ]] &&\
+        [[ "${saved_transform}" == "${transforms[$index]}" ]] &&\
+        [[ "${saved_subpixel}" == "${hintings[$index]}" ]] &&\
+        [[ "${saved_adaptive_sync}" == "${power[${adsyncs[$index]}]}" ]]; then 
+        echo true
+    else
+        echo false
+    fi 
+}
+
 save_settings() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
     local display="${displays[${index}]}"
@@ -362,12 +393,12 @@ set_display() {
     actions+=( "set_backgrounds ${i}" )
     error_msgs+=("")
 
-    entries+="$(write_menuentry "${texts[save]^} ${texts[settings]}" "false" "${icons[save]}" "true")\n"
+    entries+="$(write_menuentry "${texts[save]^} ${texts[settings]}" "$(is_saved ${i})" "${icons[save]}" "true")\n"
     actions+=( "save_settings ${i}" )
     error_msgs+=("")
     fi
 
-    header="${texts[availiable]} ${texts[display]} ${texts[options]} ${display}"
+    header="${texts[availiable]} ${texts[options]} ${display}"
     theme="./common/themes/vertical_menu.rasi"
     
     handle_rofi
@@ -390,7 +421,7 @@ IFS=$NF read -d '\0' -r -a enabled <<< "$(${JQ} '.[] | .active' <<< ${outputs})"
 [ ${#displays[@]} -eq 0 ] && die -1 "${texts[nodisplays]:-"No displays found"}"
 
 for i in "${!displays[@]}"; do
-    link_name="$(${FIND} ${HOME}/.local/state -type l -name "lastbg_${displays[i]#* }_*" | tail -n1 )"
+    link_name="$(${FIND} "${HOME}/.local/state" -type l -name "lastbg_${displays[i]#* }_*" | tail -n1 )"
     link_name=${link_name:-"lastbg_${displays[i]#* }_tile_111130"}
     color="$(cut -d'_' -f 4 <<< "${link_name}")"
     infill="$(cut -d'_' -f 3 <<< "${link_name}")"

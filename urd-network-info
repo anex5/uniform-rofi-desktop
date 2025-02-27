@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
+NMCLI="/usr/bin/nmcli -w ${TIMEOUT} -c no -e no -t"
+RDEPS="${NMCLI},"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
@@ -12,16 +14,15 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 "
 
 # parse options
-handle_script_opts "$@"
+handle_common_opts "$@"
 source "./common/langs/${default_lang}"
+
 rofiargs="${default_rofiargs} -no-custom -format i "
 default_themestr+="element-text { tab-stops: [6em]; } "
-header="${texts[header_network_info]:-Availiable networks}"
+header="${texts[header_network_info]^}"
 theme="./common/themes/vertical_menu.rasi"
 
 TIMEOUT=3
-NMCLI="/usr/bin/nmcli -w ${TIMEOUT} -c no -e no -t"
-GREP="/bin/grep --color=never -s"
 
 show_netdev_info() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"

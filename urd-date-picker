@@ -12,11 +12,12 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
     ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
-handle_script_opts "$@"
-rofiargs="${default_rofiargs}"
-#rofiargs="${default_rofiargs/-dmenu//}"
-theme="./common/themes/table.rasi"
+handle_common_opts "$@"
+rofiargs="${default_rofiargs/-dmenu/-use-hot-keys} -format p "
+#rofiargs="${default_rofiargs} -format p "
+theme="./common/themes/month.rasi"
 
+[[ " ${rofiargs} " =~ " -dmenu " ]] && ROFI_DATA="${ROFI_DATA:-"${@}"}"
 ROFI_DATA="${ROFI_DATA:-$(date +'%-Y-%-m')}"
 IFS=- read year month <<< "$ROFI_DATA"
 day="$(date +%-d)"
@@ -27,67 +28,59 @@ parsed_entries="$(sed -z 's/\\n/\n/g' <<< "${entries}")"
 if [[ "$year-$month" = "$(date +'%-Y-%-m')" ]]; then
     active="$(echo -n "${parsed_entries}" | ${SED} -n "s/[[:space:]]//g;/^${day}$/=" | ${SED} -z 's/\([0-9]*\)\n/echo -n $((\1-1));/ge')"
 else
-    active="-1"
+    active="255"
 fi
-
 handle_rofi
 
-if ${force_dmenu}; then
+case ${rofi_ret:-${ROFI_RETV}} in
+		10) # rofi kb-custom-1: go to prev month
+				year=$(( month-1 < 1 ? year-1 : year ))
+				month=$(( month-1 < 1 ? 12 : month-1 ))
+				export ROFI_DATA="$year-$month"
+				ROFI_RETV=0
+		;;
+		11) # rofi kb-custom-2: go to next month
+				year=$(( month+1 > 12 ? year+1 : year ))
+				month=$(( month+1 > 12 ? 1 : month+1 ))
+				export ROFI_DATA="$year-$month"
+				ROFI_RETV=0
+		;;
+		12) # rofi kb-custom-3: go to prev year
+				year=$(( year-1 ))
+				export ROFI_DATA="$year-$month"
+				ROFI_RETV=0
+		;;
+		13) # rofi kb-custom-4: go to next year
+				year=$(( year+1 ))
+				export ROFI_DATA="$year-$month"
+				ROFI_RETV=0
+		;;
+		14) # rofi kb-custom-5: go to current month
+				IFS=- read -r year month <<< $(date +'%-Y-%-m')
+				export ROFI_DATA="$year-$month"
+				ROFI_RETV=0
+		;;
+esac
+
+if ${force_dmenu} ; then
 		case ${rofi_ret} in
 		0)  # selected
 				wl-copy -p "$(date -d "${year}-${month}-${chosen_row}")" 2>/dev/null
-				send_notification "${texts[copied]:-Copied}: $(date -d "${year}-${month}-${chosen_row}")"
+				send_notification "${texts[copied]^}: $(date -d "${year}-${month}-${chosen_row}")"
 		;;
 		1)  # Cancelled by user
     		die 0 "${texts[canceled]:-"Cancelled..."}"
 		;;
-		10) # rofi kb-custom-1: go to prev month
-				year=$(( month-1 < 1 ? year-1 : year ))
-				month=$(( month-1 < 1 ? 12 : month-1 ))
-		;;
-		11) # rofi kb-custom-2: go to next month
-				year=$(( month+1 > 12 ? year+1 : year ))
-				month=$(( month+1 > 12 ? 1 : month+1 ))
-		;;
-		12) # rofi kb-custom-3: go to prev year
-				year=$(( year-1 ))
-		;;
-		13) # rofi kb-custom-4: go to next year
-				year=$(( year+1 ))
-		;;
-		14) # rofi kb-custom-5: go to current month
-				IFS=- read year month <<< $(date +'%-Y-%-m')
-		;;
+		#1[0-4])
+		#	  ./${prog} ${args} ${year}-${month}
+		#;;
 		esac
 else
 		case ${ROFI_RETV} in
 		1)  # set date
-				wl-copy -p "$(date -d "${year}-${month}-${ROFI_INFO}")" 2>/dev/null
-				send_notification "${texts[copied]:-Copied}: $(date -d "${year}-${month}-${ROFI_INFO}")"
-		;;
-		10) # rofi kb-custom-1: go to prev month
-				year=$(( month-1 < 1 ? year-1 : year ))
-				month=$(( month-1 < 1 ? 12 : month-1 ))
-				warn "prev month $year $month"
-		;;
-		11) # rofi kb-custom-2: go to next month
-				year=$(( month+1 > 12 ? year+1 : year ))
-				month=$(( month+1 > 12 ? 1 : month+1 ))
-				warn "next month $year $month"
-		;;
-		12) # rofi kb-custom-3: go to prev year
-				year=$(( year-1 ))
-				warn "prev year $year"
-		;;
-		13) # rofi kb-custom-4: go to next year
-				year=$(( year+1 ))
-				warn "next year $year"
-		;;
-		14) # rofi kb-custom-5: go to current month
-				IFS=- read year month <<< $(date +'%-Y-%-m')
-				warn "current month year"
+				wl-copy -p "$(date -d "${year}-${month}-${@}")" 2>/dev/null
+				send_notification "${texts[copied]^}: $(date -d "${year}-${month}-${@}")"
 		;;
 		esac
-		export ROFI_DATA="$year-$month"
 fi
 

@@ -6,7 +6,7 @@ Options:
     -i, --no-icons              Hide icons 
     -l, --lang     LANG         Set interface language
     -f, --filter                Show inputbar search query.
-    -a, --args     ARGS         Add cusom arguments for rofi
+    -o, --args     ARGS         Add cusom arguments for rofi
     -m, --monitor  POSITION     Position rofi with respect to the monitor.
     -w, --window   POSITION     Position rofi with respect to the focused window.
     -h, --help                  Print this help message and exit.

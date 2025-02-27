@@ -26,7 +26,7 @@ while [ "$#" -ge 1 ]; do
     shift
 done
 
-handle_script_opts "$@"
+handle_common_opts "$@"
 rofiargs="${default_rofiargs} -no-custom -format i "
 
 entries+="$(write_menuentry "${texts[confirm]^}" "false" "${icons[yes]}" "true")\n"

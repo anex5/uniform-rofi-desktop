@@ -12,7 +12,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 "
 # parse options
 
-handle_script_opts "$@"
+handle_common_opts "$@"
 rofiargs="${default_rofiargs} -no-custom -format i "
 #default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
 header="${texts[header_sane_frontend]:-Availiable image scanners}"

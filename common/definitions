@@ -7,7 +7,7 @@ set +x
 dryrun=false
 force_dmenu=false
 default_icons="nf-icons"
-default_rofiargs="-pid /run/user/$(id -u)/rofi.pid -replace -markup -markup-rows -keep-left -async-pre-read 0 -dmenu"
+default_rofiargs="-pid /run/user/$(id -u)/rofi.pid -replace -markup-rows -keep-left -dmenu"
 default_spanattrs="font_features='dlig=0, -kern, afrc on'"
 default_themestr=""
 default_lang="ru_RU"
@@ -22,7 +22,7 @@ source ./common/icons/$default_icons
 # Check version of bash for variable indirection
 case $BASH_VERSION in ''|[123].*|4.[012]) die 1 "Bash 4.3+ needed" ; esac
 
-ROFI="/usr/bin/rofi ${default_rofiargs}"
+ROFI="/usr/bin/rofi"
 SED="/bin/sed -u"
 GREP="/bin/grep --color=never"
 LS="/bin/ls -A --format=single-column --color=never"
@@ -34,17 +34,17 @@ MACADDR_SEDMASK="[[:xdigit:]:]\{11,17\}"
 SPANATTRS="${default_spanattrs}"
 NF='
 '
-
 declare -A script_opts
 script_opts=(
-    [p]=prompt
+    [p]="prompt"
     [mesg]=message
-    [markup-rows]=markuprows
-    [u]=urgent
-    [a]=active
-    [sep]=delim
-    [no-custom]=nocustom
-    [use-hot-keys]=usehotkeys
+    [markup-rows]="markup-rows"
+    [u]="urgent"
+    [a]="active"
+    [sep]="delim"
+    [theme-str]="theme"
+    [no-custom]="no-custom"
+    [use-hot-keys]="use-hot-keys"
 )
 
 declare -A anchors
@@ -87,13 +87,14 @@ toggle=(
 
 declare -a actions error_msgs confirm nocatch
 
-handle_script_opts() {
+handle_common_opts() {
     while [ "$#" -ge 1 ]; do
         case "${1?${texts[missingarg]:-Missing argument} script options}" in
             -i|--no-icons) 
                 unset -f icons
                 rofiargs+=" -no-show-icons"
-                default_themestr+=" configuration { show-icons: false; }" 
+                default_themestr+=" configuration { show-icons: false; }"
+                shift
             ;;
             -l|--lang) 
                 if [ -f "./common/langs/${2?${texts[missingarg]:-Missing argument} --lang}" ]; then
@@ -102,14 +103,15 @@ handle_script_opts() {
                     default_lang="${2}"
                     source ./common/langs/"${2}" || die -1 "${texts[nofile]:-"No such file "} ./common/langs/${2}"
                 fi
-                shift
+                shift 2
   	        ;;
             -f|--filter) 
                 default_themestr+=" inputbar { enabled: true; } configuration { kb-clear-line: \"\"; }"
-            ;;
-            -a|--args)
-                while read -r -d' ' arg; do default_rofiargs+=" ${arg}"; done <<< "${2?${texts[missingarg]:-Missing argument}} " || die 1 "Argument required to pass it to rofi."
                 shift
+            ;;
+            -o|--args)
+                while read -r -d' ' arg; do default_rofiargs+=" ${arg}"; done <<< "${2?${texts[missingarg]:-Missing argument}} "
+                shift 2
             ;;
 	        -m|--monitor) 
 	            if [[ "${!anchors[@]}" != *${2?${texts[missingarg]:-Missing argument} --monitor}* ]]; then
@@ -118,7 +120,7 @@ handle_script_opts() {
 	            fi
 	            rofiargs+=" -m -3"
 	            default_themestr+=" window { anchor: ${anchors[${2}]}; location: center; } "
-	            shift
+	            shift 2
 	        ;;
 	        -w|--window)
 	            if [[ "${!anchors[@]}" != *${2?${texts[missingarg]:-Missing argument} --window}* ]]; then
@@ -127,7 +129,7 @@ handle_script_opts() {
 	            fi
 	            rofiargs+=" -m -2"
 	            default_themestr+=" window { anchor: ${2}; location: ${2}; x-offset: ${xoffsets[${2}]}em; y-offset: ${yoffsets[${2}]}em; } "
-	            shift
+	            shift 2
 	        ;;
 	        --) shift; break ;;
 	        -h|--help) 
@@ -136,39 +138,42 @@ handle_script_opts() {
 	        -*) 
 	            die "Unknown option $1 ${usage}"
 	        ;;
+	        *)
+	            break
+	        ;;
         esac
-        shift
 	done
 }
 
 handle_rofi() {
-    [[ "${rofiargs}" =~ "-dmenu" ]] && force_dmenu=true
+    [[ " ${rofiargs} " =~ " -dmenu " ]] && force_dmenu=true
     
     if ${force_dmenu}; then
-        [[ -n "${active}" ]] && rofiargs+="-a ${active} -selected-row ${active}"
-        [[ -n "${urgent}" ]] && rofiargs+="-u ${urgent}"
-        chosen_row=$(echo -en "${entries%%\\n}" | ${ROFI} ${rofiargs} -mesg "${header^}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}" )
+        [[ -n "${active}" ]] && rofiargs+=" -a ${active}"
+        [[ -n "${urgent}" ]] && rofiargs+=" -u ${urgent}"
+        chosen_row=$(echo -en "${entries%%\\n}" | ${ROFI} ${rofiargs} -mesg "${header^}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}")
         rofi_ret=$?
-        case "${rofi_ret}" in
-        "0") # Entry chosen
+        case ${rofi_ret} in
+        0) # Entry chosen
             if [ ${#actions[@]} -gt 0 -a -n "${actions[$chosen_row]}" ]; then
                 if [ ${#confirm[@]} -gt 0 -a "${confirm[$chosen_row]}" == "true" ]; then
                     ./urd-confirm && \
                     run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}" "${nocatch[$chosen_row]}"
                 else
+                    #send_notification "${actions[$chosen_row]}"
                     run_menuentry_action "${actions[$chosen_row]}" "${error_msgs[$chosen_row]}" "${nocatch[$chosen_row]}"
                 fi
             #else
                 #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
             fi
         ;;
-        "1") # Cancelled by user
+        1) # Cancelled by user
             die 0 "${texts[canceled]:-"Cancelled..."}"
         ;;
-        "1[0-9]"|"2[0-8]") # run new instance on custom key
-	        ./${prog} ${args}
+        1[0-9]|2[0-8]) # run new instance on custom key
+	        ./${prog} ${args} ${chosen_row}
         ;;
-        "*")  die -1 ${rofi_ret} "${texts[error]:-"Error: "} ${rofi_ret}"
+        *)  die ${rofi_ret} "${texts[error]^}: ${rofi_ret}"
         ;;
         esac
     else
@@ -176,44 +181,33 @@ handle_rofi() {
         get_script_opts "${rofiargs}"
 	    [ -n "${prompt}" ] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
         [ -n "${header}" ] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
-        [ -n "${markuprows}" ] && echo -e "\x00markup-rows\x1f${markuprows}"
-        [ -n "${urgent}" ] && echo -e "\x00urgent\x1f${urgent}"
-        [ -n "${active}" ] && ( echo -e "\x00active\x1f${active}"; rofiargs+="-selected-row ${active}" )
         [ -n "${data}" ] && echo -e "\x00data\x1f${data}"
-        [ -n "${theme}" ] && echo -e "\x00theme\x1f${theme}"
-        [ -n "${nocustom}" ] && echo -e "\x00no-custom\x1f${nocustom}"
         [ -n "${keepselection}" ] && echo -e "\x00keep-selection\x1f${keepselection}"
         [ -n "${newselection}" ] && echo -e "\x00new-selection\x1f${newselection}"
 
-        #warn "${entries}"
-        #rofi_ret="$(${ROFI} ${rofiargs} -modi "urd:./${prog} ${args}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}" )"
-
-        case "${ROFI_RETV}" in
+        case ${ROFI_RETV} in
         "") # script called directly
-            ${ROFI} ${rofiargs} -modi "urd:./${prog} ${args}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}"
+            ${ROFI} ${rofiargs// -dmenu} -modi "urd:./${prog} ${args}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}"
         ;;
-        "0") # rofi: initial call of script
+        0) # rofi: initial call of script
   	        echo -en "${entries}"
         ;;
-        "1") # rofi: selected an entry
-            if [ ${#actions[@]} -gt 0 -a -n "${actions[$ROFI_INFO]}" ]; then
-                if [ ${#confirm[@]} -gt 0 -a -n "${confirm[$ROFI_INFO]}" ]; then
+        1) # rofi: selected an entry
+            if [ ${#actions[@]} -gt 0 -a -n "${actions[${@}]}" ]; then
+                if [ ${#confirm[@]} -gt 0 -a -n "${confirm[${@}]}" ]; then
                     ./urd-confirm && \
-                    run_menuentry_action "${actions[$ROFI_INFO]}" "${error_msgs[$ROFI_INFO]}" "${nocatch[$ROFI_INFO]}"
+                    run_menuentry_action "${actions[${@}]}" "${error_msgs[${@}]}" "${nocatch[${@}]}"
                 else
-                    run_menuentry_action "${actions[$ROFI_INFO]}" "${error_msgs[$ROFI_INFO]}" "${nocatch[$ROFI_INFO]}"
+                    run_menuentry_action "${actions[${@}]}" "${error_msgs[${@}]}" "${nocatch[${@}]}"
                 fi
             #else
-                #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$chosen_row]"
+                #die 1 "${texts[failed]:-"Failed"}: ${texts[varunset]:-"Variable unset"} actions[$@]"
             fi
 
 		    #send_notification "Selected entry... $ROFI_INFO"
         ;;
-        "2") # rofi: selected custom entry
-            : #warn "Selected custom-entry..."
-        ;;
-        *) # rofi: selected unknown entry
-	        die -1 "Unknown entry selected (this is a bug): $1"
+        2) # rofi: selected custom entry
+            warn "Selected custom-entry..."
         ;;
         esac
     fi
@@ -258,7 +252,6 @@ get_branch_icon(){
     # $2 -- current index (count from 0)
     local arr_len="${1?${texts[missingarg]:-Missing argument} arr_len}"
     local index="${2?${texts[missingarg]:-Missing argument} index}"
-
     echo "<span ${SPANATTRS}>${branch[$([ "${arr_len}" -eq "$((${index}+1))" ] && echo 1 || echo 0)]}</span>"
 }
 
@@ -279,11 +272,11 @@ write_menuentry() {
     [ -n "${icon}" ] && echo -n "\x${code}icon\x1f${icon}" && code="1f"
     [ -n "${display}" ] && echo -n "\x${code}display\x1f${display}" && code="1f"
     [ -n "${meta}" ] && echo -n "\x${code}meta\x1f${meta}" && code="1f"
-    [[ "true false" =~ "${nonselectable}" ]] && echo -n "\x${code}nonselectable\x1f${nonselectable}" && code="1f"
-    [[ "true false" =~ "${permanent}" ]] && echo -n "\x${code}permanent\x1f${permanent}" && code="1f"
+    [[ " true false " =~ " ${nonselectable} " ]] && ( echo -n "\x${code}nonselectable\x1f${nonselectable}" && code="1f" )
+    [[ " true false " =~ " ${permanent} " ]] && ( echo -n "\x${code}permanent\x1f${permanent}" && code="1f" )
     [ -n "${info}" ] && echo -n "\x${code}info\x1f${info}" && code="1f"
-    [[ "true false" =~ "${urgent}" ]] && echo -n "\x${code}urgent\x1f${urgent}" && code="1f"
-    [[ "true false" =~ "${active}" ]] && echo -n "\x${code}active\x1f${active}"
+    [[ " true false " =~ " ${urgent} " ]] && ( echo -n "\x${code}urgent\x1f${urgent}" && code="1f" )
+    [[ " true false " =~ " ${active} " ]] && ( echo -n "\x${code}active\x1f${active}" )
 }
 
 _CTRL_Z_=$'\cZ'
@@ -307,14 +300,14 @@ run_menuentry_action() {
     local retcode=1
     if ${dryrun}; then
         warn "Dry run: ${action}"
-        warn "error msg: ${error_msg}"
+        warn "error msg: ${error_msg^}"
         send_notification "Dry run:" "${action} ${error_msg^}"
     else
         if ${nocatch}; then
-            #send_notification "${action}"
             retcode=0
             ${action}
         else
+            #send_notification "${action}"
             catch_posix catch_output catch_error ${action}
             retcode=$?
             if [ ${retcode} -ne 0 ] && [ -n "${error_msg}" ]; then 
@@ -335,15 +328,14 @@ send_notification() {
 }
 
 get_script_opts() {
-    IFS=$'|';set -f;arguments=( ${1// -/|} );set +f;IFS=$' \n\t'
-    local result=""
-    for arg in "${arguments[@]}"; do
+    local args=" ${@}"
+    while IFS= read -r -d '|' arg ; do
         key="${arg% *}"
-        val="${arg/${key}/}"
-        [[ "${!script_opts[*]}" =~ " ${key} " ]] && \
-            result+="\x00${script_opts[$key]}\x1f$( [[ -z ${val#* } ]] && echo -n true || echo -n ${val#* })\n"
-    done
-    echo -e "${result}"
+        val="${arg//${key}/}"
+        [[ " ${!script_opts[*]} " =~ " ${key} " ]] && \
+            result+="\x00${script_opts[$key]}\x1f$( [[ -z "${val// /}" ]] && echo -en true || echo -en "${val// /}")\n"
+    done <<< "${args// -/|}|"
+    echo -en "${result}"
 }
 
 check_runtime_deps "${RDEPS}"

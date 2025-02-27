@@ -14,7 +14,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
     ${common_usage}
 "
 # parse options
-handle_script_opts "$@"
+handle_common_opts "$@"
 source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
 default_themestr+="element-text { tab-stops: [8em, 12em]; } "

@@ -28,7 +28,7 @@ while [ "$#" -ge 1 ]; do
     esac
     shift
 done
-handle_script_opts "$@"
+handle_common_opts "$@"
 
 rofiargs="${default_rofiargs} -format f -dmenu"
 

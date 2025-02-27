@@ -1,9 +1,9 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
 LOCK="/usr/bin/swaylock -f -c 000000"
 LOGIND="/bin/loginctl"
-RDEPS+="${LOCK},${LOGIND},"
+RDEPS="${LOCK},${LOGIND},"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
@@ -14,7 +14,7 @@ usage="${texts[usage]}: ${prog} [$texts[options]]
     ${common_usage}
 "
 # parse options
-handle_script_opts "$@"
+handle_common_opts "$@"
 source "./common/langs/${default_lang}"
 
 rofiargs="${default_rofiargs} -no-custom -format i "
@@ -45,7 +45,7 @@ for i in "${show[@]}"; do
     error_msgs+=( "${texts[${i}]} ${texts[failed]:-failed}." )
 done
 
-header="${texts[header_logout_menu]}"
+header="${texts[header_logout_menu]^}"
 theme="./common/themes/vertical_menu.rasi"
 handle_rofi
 
