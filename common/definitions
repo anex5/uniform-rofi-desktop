@@ -135,9 +135,6 @@ handle_common_opts() {
 	        -h|--help) 
 	            die 0 "$usage"
 	        ;;
-	        -*) 
-	            die "Unknown option $1 ${usage}"
-	        ;;
 	        *)
 	            break
 	        ;;
@@ -151,7 +148,7 @@ handle_rofi() {
     if ${force_dmenu}; then
         [[ -n "${active}" ]] && rofiargs+=" -a ${active}"
         [[ -n "${urgent}" ]] && rofiargs+=" -u ${urgent}"
-        chosen_row=$(echo -en "${entries%%\\n}" | ${ROFI} ${rofiargs} -mesg "${header^}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}")
+        chosen_row=$(echo -en "${entries%%\\n}" | ${ROFI} ${rofiargs} -mesg "${header^}" -window-title "${header^}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}")
         rofi_ret=$?
         case ${rofi_ret} in
         0) # Entry chosen
