@@ -173,5 +173,6 @@ texts=(
 [stretch]="stretch"
 [center]="center"
 [tile]="tile"
+[copied]="copied"
 [programtermination]="program termination"
 )

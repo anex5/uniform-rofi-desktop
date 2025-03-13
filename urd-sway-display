@@ -24,7 +24,7 @@ handle_common_opts "$@"
 rofiargs="${default_rofiargs} -no-custom -format i "
 # default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
 theme="./common/themes/vertical_menu.rasi"
-header="${texts[header_sway_display]:-Heder not set (this is a bug)}"
+header="${texts[header_sway_display]:-"Header not set"}"
 
 declare -A switch power
 switch=( 
@@ -142,14 +142,14 @@ change_bg() {
             killall mpvpaper
             # Use full display name i.e. ${display#* } to override default value in sway config
             last_bg[${index}]="${bg}|${bginfill}|${bgcolor}"
-            ${SWAYMSG} output \"${display#* }\" bg \"${bg}\" \"${bginfill}\" \"#${bgcolor}\" && mklink ${index}
+            ${SWAYMSG} output \"${display#* }\" bg \"${bg@Q}\" \"${bginfill}\" \"#${bgcolor}\" && mklink ${index}
         ;;
         "avi"|"mp4"|"webm")
             killall swaybg
             killall mpvpaper
             last_bg[${index}]="${bg}|${bginfill}|${bgcolor}"
             # Use port display name i.e. ${display%% *} as mpvpaper do not understand full display name
-            ${SWAYMSG} exec -- ${MPVPAPER} ${display%% *} ${bg} && mklink ${index}
+            ${SWAYMSG} exec -- ${MPVPAPER} ${display%% *} ${bg@Q} && mklink ${index}
         ;;
         \#[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F])
             killall mpvpaper
@@ -162,39 +162,62 @@ change_bg() {
 set_bg_image() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
-    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
-    declare -a bgs
-    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
-        -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)"
-    for f in "${bgs[@]}"; do
-        current="$([[ " ${f} " =~ " ${last_bg[$index]%%|*} " ]] && echo true || echo false )"
-        entries+="$(write_menuentry "${f##*/}" "${current}" "${f}")\n"
+    #entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+
+    f="$(${ROFI} ${rofiargs// -dmenu} -show filebrowser -theme-str "@import \"./common/themes/vertical_menu.rasi\"" \
+        -filebrowser-directories-first true \
+        -filebrowser-directory "${WPSRCDIR/#~/$HOME}" \
+        -filebrowser-filter-regex "^.*(?<!\.(jpg|png|bmp|jpeg|webp))$" \
+        -filebrowser-command "echo -en ")"
+    #declare -a bgs
+    #IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
+    #    -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)"
+    #for f in "${bgs[@]}"; do
+    #    current="$([[ " ${f} " =~ " ${last_bg[$index]%%|*} " ]] && echo true || echo false )"
+    #    entries+="$(write_menuentry "${f##*/}" "${current}" "${f}")\n"
         # Use full display name i.e. ${display#* } to override default value in sway config
-        actions+=("change_bg ${index} ${f}")
-        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[image]} ${texts[background]}" )
-    done
-    header="${texts[availiable]^} ${texts[display]} ${texts[backgrounds]}"
-    theme="./common/themes/vertical_menu.rasi"
-    handle_rofi
+    #    actions+=("change_bg ${index} ${f}")
+    #    error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[image]} ${texts[background]}" )
+    #done
+    #header="${texts[availiable]^} ${texts[display]} ${texts[backgrounds]}"
+    #theme="./common/themes/vertical_menu.rasi"
+    #handle_rofi
+    if [ -a "${f}" ]; then 
+        change_bg ${index} "${f}"
+    else
+        send_notification "${texts[cant]^} ${texts[open]} ${texts[file]} ${f}"
+    fi
     return $?
 }
 
 set_bg_video() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"
     local display="${displays[index]}"
-    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
-    declare -a bgs
-    IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
-        -name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
-    for f in "${bgs[@]}"; do
-        current="$([[ " ${f} " =~ " ${last_bg[$index]%% *} " ]] && echo true || echo false )"
-        entries+="$(write_menuentry "${f##*/}" "${current}" "${icons[videofile]}")\n"
-        actions+=( "change_bg ${index} ${f}" )
-        error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[video]} ${texts[background]}" )
-    done
-    header="${texts[availiable]^} ${texts[display]} ${texts[video]} ${texts[backgrounds]}"
-    theme="./common/themes/vertical_menu.rasi"
-    handle_rofi
+    #entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    #declare -a bgs
+    #IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
+    #    -name \*\.wmv -o -name \*\.mpeg -o -name \*\.mp4 -o -name \*\.webm -o -name \*\.avi)"
+    #for f in "${bgs[@]}"; do
+    #    current="$([[ " ${f} " =~ " ${last_bg[$index]%% *} " ]] && echo true || echo false )"
+    #    entries+="$(write_menuentry "${f##*/}" "${current}" "${icons[videofile]}")\n"
+    #    actions+=( "change_bg ${index} ${f}" )
+    #    error_msgs+=( "${texts[cantset]} ${texts[display]} ${texts[video]} ${texts[background]}" )
+    #done
+    #header="${texts[availiable]^} ${texts[display]} ${texts[video]} ${texts[backgrounds]}"
+    #theme="./common/themes/vertical_menu.rasi"
+    #handle_rofi
+
+    f="$(${ROFI} ${rofiargs// -dmenu} -show filebrowser -theme-str "@import \"./common/themes/vertical_menu.rasi\"" \
+        -filebrowser-directories-first true \
+        -filebrowser-directory "${WPSRCDIR/#~/$HOME}" \
+        -filebrowser-filter-regex "^.*(?<!\.(avi|mp4|mpeg|ts|webm|wmv))$" \
+        -filebrowser-command "echo -en ")"
+    
+    if [ -a "${f}" ]; then 
+        change_bg ${index} "${f}"
+    else
+        send_notification "${texts[cant]^} ${texts[open]} ${texts[file]} ${f}"
+    fi
     return $?
 }
 
@@ -218,7 +241,7 @@ set_bg_solid_color(){
 
 is_video(){
     local file="${@?${texts[missingarg]:-"Missing argument file"}}"
-    [[ " wmv mpeg mp4 webm avi " =~ " ${file##*.} " ]] && echo true || echo false
+    [[ " wmv mpeg mp4 webm avi vob ts mkv " =~ " ${file##*.} " ]] && echo true || echo false
 }
 
 is_image(){

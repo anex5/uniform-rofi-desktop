@@ -16,8 +16,8 @@ urgent=""
 header=""
 theme=""
 nbsp=$'\302\240'
-source ./common/langs/$default_lang
-source ./common/icons/$default_icons
+source "./common/langs/$default_lang"
+source "./common/icons/$default_icons"
 
 # Check version of bash for variable indirection
 case $BASH_VERSION in ''|[123].*|4.[012]) die 1 "Bash 4.3+ needed" ; esac
@@ -143,12 +143,12 @@ handle_common_opts() {
 }
 
 handle_rofi() {
-    [[ " ${rofiargs} " =~ " -dmenu " ]] && force_dmenu=true
+    [[ " ${rofiargs@Q} " =~ " -dmenu " ]] && force_dmenu=true
     
     if ${force_dmenu}; then
         [[ -n "${active}" ]] && rofiargs+=" -a ${active}"
         [[ -n "${urgent}" ]] && rofiargs+=" -u ${urgent}"
-        chosen_row=$(echo -en "${entries%%\\n}" | ${ROFI} ${rofiargs} -mesg "${header^}" -window-title "${header^}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}")
+        chosen_row=$(echo -en "${entries%%\\n}" | ${ROFI} ${rofiargs@Q} -mesg "${header^}" -window-title "${header^}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}")
         rofi_ret=$?
         case ${rofi_ret} in
         0) # Entry chosen
@@ -168,14 +168,14 @@ handle_rofi() {
             die 0 "${texts[canceled]:-"Cancelled..."}"
         ;;
         1[0-9]|2[0-8]) # run new instance on custom key
-	        ./${prog} ${args} ${chosen_row}
+	        ./${prog} ${args@Q} ${chosen_row}
         ;;
         *)  die ${rofi_ret} "${texts[error]^}: ${rofi_ret}"
         ;;
         esac
     else
         #warn "direct"
-        get_script_opts "${rofiargs}"
+        get_script_opts "${rofiargs@Q}"
 	    [ -n "${prompt}" ] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
         [ -n "${header}" ] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
         [ -n "${data}" ] && echo -e "\x00data\x1f${data}"
@@ -184,7 +184,7 @@ handle_rofi() {
 
         case ${ROFI_RETV} in
         "") # script called directly
-            ${ROFI} ${rofiargs// -dmenu} -modi "urd:./${prog} ${args}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}"
+            ${ROFI} ${rofiargs// -dmenu} -modi "urd:./${prog} ${args@Q}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}"
         ;;
         0) # rofi: initial call of script
   	        echo -en "${entries}"
