@@ -18,6 +18,8 @@ horibox {
     spacing         : 0;
     padding         : 0 0.75em 0.75em 0.75em;
     children        : [ button-prev-month, button-prev-year, button-curr-month, button-next-year, button-next-month ];
+    background-color: transparent;
+    text-color      : inherit;
 }
 
 window {
@@ -51,6 +53,11 @@ element-text active {
 
 textbox {
     horizontal-align: 0.5;
+}
+
+button, button.selected {
+    text-color      : inherit;
+    background-color: inherit;
 }
 
 button-prev-month, button-prev-year, button-curr-month, button-next-year, button-next-month {

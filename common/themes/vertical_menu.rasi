@@ -75,8 +75,8 @@ textbox {
 button-toggle normal.normal,
 button-toggle selected.normal,
 button-toggle alternate.normal {
-    background-color: inherit;
-    text-color: @bg3;
+    background-color: transparent;
+    text-color: transparent;
     horizontal-align: 0.0;
     vertical-align: 0.5;
     expand: false;
@@ -90,5 +90,6 @@ button-toggle normal.active,
 button-toggle selected.active,
 button-toggle alternate.active  {
     text-color: #00ff00;
+    background-color: transparent;
 }
 
