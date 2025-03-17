@@ -183,7 +183,7 @@ for i in ${!btctl[@]}; do
         bticon="bt$( ${SED} -n "s/^.\+Icon: \([A-Za-z-]\+\)$/\1/p" <<< "${clientinfo[$j]}" )"
         btbattery="$( ${SED} -n "s/^.\+Battery Percentage: .\+ (\([0-9]\+\))$/\1/p" <<< "${clientinfo[$j]}" )"
         #btrssi="$( ${SED} -n "s/^.\+RSSI: .\+ (\([-0-9]\+\))$/\1/p" <<< "${clientinfo[$j]}" )"
-        btbaticon=$( [ -n "${btbattery}" ] && echo -e ${icons["btbat${btbattery: -1}0"]} || echo -e "")
+        btbaticon="$( [ -n "${btbattery}" ] && echo -e "${icons["btbat${btbattery:0:-1}0"]}" || echo -e "")"
         entries+="$(write_menuentry "$(get_branch_icon "${#clients[@]}" "${j}")${btbaticon} ${clients[j]}" "${bool[${connected}]}" "${icons[${bticon}]}")\n"
         actions+=("set_client ${j} ${bdmacaddr}") 
     done
