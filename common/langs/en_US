@@ -174,5 +174,7 @@ texts=(
 [center]="center"
 [tile]="tile"
 [copied]="copied"
+[open]="open"
+[file]="file"
 [programtermination]="program termination"
 )
