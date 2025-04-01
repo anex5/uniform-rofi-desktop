@@ -302,7 +302,7 @@ is_saved() {
     local saved_adaptive_sync=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*adaptive_sync \(.*\)$|\1|p" "${config_name}")
 
     #send_notification "$saved_mode | $saved_bg | $saved_position | $saved_scale | $saved_transform | $saved_subpixel | $saved_adaptive_sync"
-    send_notification "${saved_bg//#/} ${last_bg[$index]//|/ }"
+    #send_notification "${saved_bg//#/} ${last_bg[$index]//|/ }"
 
     if \
         [[ "${saved_bg//#/}" == "${last_bg[$index]//|/ }" ]] &&\
