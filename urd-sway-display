@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
-SWAYMSG="/usr/bin/swaymsg"
-SWAYBG="/usr/bin/swaybg"
-MPVPAPER='/usr/bin/mpvpaper -f -p -o profile=mpvpaper'
+SWAYMSG="swaymsg"
+SWAYBG="swaybg"
+MPVPAPER='mpvpaper -f -p -o profile=mpvpaper'
 JQ="/usr/bin/jq --unbuffered -r"
 RDEPS+="${SWAYMSG},${SWAYBG},${MPVPAPER},${JQ},"
 

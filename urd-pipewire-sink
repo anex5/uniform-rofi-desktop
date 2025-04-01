@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
-WPCTL="/usr/bin/wpctl"
+WPCTL="wpctl"
 RDEPS+="${WPCTL},"
 source "./common/definitions"
 prog="${0##*/}"

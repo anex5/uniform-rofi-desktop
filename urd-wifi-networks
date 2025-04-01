@@ -21,8 +21,7 @@ theme="./common/themes/vertical_menu.rasi"
 
 FIELDS="NAME,SSID,MODE,CHAN,FREQ,RATE,SIGNAL,BARS,SECURITY,WPA-FLAGS,RSN-FLAGS,IN-USE,BSSID"
 TIMEOUT=3
-NMCLI="/usr/bin/nmcli -w ${TIMEOUT} -c no -e no -t"
-GREP="/bin/grep --color=never -s"
+NMCLI="nmcli -w ${TIMEOUT} -c no -e no -t"
 
 declare -A act
 act[connect]="wifi_connect"

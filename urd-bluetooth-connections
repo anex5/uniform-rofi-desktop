@@ -2,7 +2,7 @@
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
 TIMEOUT=2
-BTCTL="/usr/bin/bluetoothctl"
+BTCTL="bluetoothctl"
 RDEPS+="${BTCTL},"
 source "./common/definitions"
 prog="${0##*/}"

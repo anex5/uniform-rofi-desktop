@@ -22,12 +22,12 @@ source "./common/icons/$default_icons"
 # Check version of bash for variable indirection
 case $BASH_VERSION in ''|[123].*|4.[012]) die 1 "Bash 4.3+ needed" ; esac
 
-ROFI="/usr/bin/rofi"
-SED="/bin/sed -u"
-GREP="/bin/grep --color=never"
-LS="/bin/ls -A --format=single-column --color=never"
-FIND="/usr/bin/gfind"
-PRINTF="/usr/bin/printf"
+ROFI="rofi"
+SED="sed -u"
+GREP="grep --color=never"
+LS="ls -A --format=single-column --color=never"
+FIND="gfind"
+PRINTF="printf"
 RDEPS+="${ROFI},${SED},${GREP},${LS},${FIND}"
 
 MACADDR_SEDMASK="[[:xdigit:]:]\{11,17\}"

@@ -2,7 +2,7 @@
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
 TIMEOUT=3
-NMCLI="/usr/bin/nmcli -w ${TIMEOUT} -c no -e no -t"
+NMCLI="nmcli -w ${TIMEOUT} -c no -e no -t"
 RDEPS="${NMCLI},"
 source "./common/definitions"
 prog="${0##*/}"

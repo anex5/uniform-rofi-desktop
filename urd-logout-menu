@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
-LOCK="/usr/bin/swaylock -f -c 000000"
-LOGIND="/bin/loginctl"
+LOCK="swaylock -f -c 000000"
+LOGIND="loginctl"
 RDEPS="${LOCK},${LOGIND},"
 source "./common/definitions"
 prog="${0##*/}"

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
-UDISKSCTL="/usr/bin/udisksctl"
-LSBLK="/bin/lsblk -n -l"
+UDISKSCTL="udisksctl"
+LSBLK="lsblk -n -l"
 RDEPS+="${UDISKSCTL},${LSBLK}"
 source "./common/definitions"
 prog="${0##*/}"
