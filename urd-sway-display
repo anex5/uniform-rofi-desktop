@@ -7,7 +7,7 @@ MPVPAPER='mpvpaper -f -p -o profile=mpvpaper'
 JQ="/usr/bin/jq --unbuffered -r"
 RDEPS+="${SWAYMSG},${SWAYBG},${MPVPAPER},${JQ},"
 
-WPSRCDIR="${HOME}/Wallpapers"
+WPSRCDIR="~/Wallpapers"
 source "./common/definitions"
 prog="${0##*/}"
 args=$*
@@ -290,7 +290,7 @@ change_infill() {
 is_saved() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
     local display="${displays[${index}]}"
-    local config_path="${HOME}/.config/sway"
+    local config_path="~/.config/sway"
     local config_name="${config_path}/urd-sway-display-${display#* }"
 
     local saved_mode=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*mode \(.*Hz\)$|\1|p" "${config_name}")
@@ -302,7 +302,7 @@ is_saved() {
     local saved_adaptive_sync=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*adaptive_sync \(.*\)$|\1|p" "${config_name}")
 
     #send_notification "$saved_mode | $saved_bg | $saved_position | $saved_scale | $saved_transform | $saved_subpixel | $saved_adaptive_sync"
-    #send_notification "${saved_bg//#/} ${last_bg[$index]//|/ }"
+    send_notification "${saved_bg//#/} ${last_bg[$index]//|/ }"
 
     if \
         [[ "${saved_bg//#/}" == "${last_bg[$index]//|/ }" ]] &&\
@@ -325,7 +325,7 @@ save_settings() {
     # Use full display name i.e. ${display#* } to override default value in sway config
     IFS='|' read -r -d '\0' bgname bginfill bgcolor null <<< "${last_bg[${index}]}|"
     
-    local config_path="${HOME}/.config/sway"
+    local config_path="~/.config/sway"
     local config_name="${config_path}/urd-sway-display-${display#* }"
     local config_included="$(${GREP} -q "include ${config_path}/'${config_name##*/}'" "${config_path}/config" && echo true || echo false)"
     test ${config_included} || echo -e "include ${config_path}/'${config_name##*/}'" >> "${config_path}/config"
@@ -445,11 +445,12 @@ IFS=$NF read -d '\0' -r -a enabled <<< "$(${JQ} '.[] | .active' <<< ${outputs})"
 
 for i in "${!displays[@]}"; do
     link_name="$(${FIND} "${HOME}/.local/state" -type l -name "lastbg_${displays[i]#* }_*" | tail -n1 )"
-    link_name=${link_name:-"lastbg_${displays[i]#* }_tile_111130"}
+    link_name="${link_name:-"${HOME}/.local/state/lastbg_${displays[i]#* }_tile_111130"}"
     color="$(cut -d'_' -f 4 <<< "${link_name}")"
     infill="$(cut -d'_' -f 3 <<< "${link_name}")"
-    last_bg+=( "$(readlink -q "${link_name}" 2>/dev/null || echo -e "${texts[varunset]}")|${infill}|${color}" )
-    #warn "bg: ${last_bg[i]} infill: ${infill} color: ${color}"
+    file_name="$(readlink -q -n "${link_name}" 2>/dev/null || echo -e "${texts[varunset]}")|${infill}|${color}"
+    last_bg+=( "${file_name/${HOME}\//\~/}" )
+    #warn "link: ${link_name} bg: ${last_bg[i]} infill: ${infill} color: ${color}"
     entries+="$(write_menuentry "${displays[i]}" "${enabled[i]}" "${icons[${displays[i]%%-*}]}")\n"
     actions+=( "set_display ${i}" )
     confirm+=( false )
