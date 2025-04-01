@@ -291,7 +291,7 @@ is_saved() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
     local display="${displays[${index}]}"
     local config_path="~/.config/sway"
-    local config_name="${config_path}/urd-sway-display-${display#* }"
+    local config_name="${config_path/\~/${HOME}}/urd-sway-display-${display#* }"
 
     local saved_mode=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*mode \(.*Hz\)$|\1|p" "${config_name}")
     local saved_bg=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*bg \(.*\)$|\1|p" "${config_name}")
@@ -302,7 +302,8 @@ is_saved() {
     local saved_adaptive_sync=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*adaptive_sync \(.*\)$|\1|p" "${config_name}")
 
     #send_notification "$saved_mode | $saved_bg | $saved_position | $saved_scale | $saved_transform | $saved_subpixel | $saved_adaptive_sync"
-    #send_notification "${saved_bg//#/} ${last_bg[$index]//|/ }"
+    #send_notification "${config_name}"
+    # ${saved_bg//#/} ${last_bg[$index]//|/ }"
 
     if \
         [[ "${saved_bg//#/}" == "${last_bg[$index]//|/ }" ]] &&\
@@ -326,7 +327,7 @@ save_settings() {
     IFS='|' read -r -d '\0' bgname bginfill bgcolor null <<< "${last_bg[${index}]}|"
     
     local config_path="~/.config/sway"
-    local config_name="${config_path}/urd-sway-display-${display#* }"
+    local config_name="${config_path/\~/${HOME}}/urd-sway-display-${display#* }"
     local config_included="$(${GREP} -q "include ${config_path}/'${config_name##*/}'" "${config_path}/config" && echo true || echo false)"
     test ${config_included} || echo -e "include ${config_path}/'${config_name##*/}'" >> "${config_path}/config"
         
