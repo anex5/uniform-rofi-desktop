@@ -20,7 +20,7 @@ header="${texts[header_wifi_networks]}"
 theme="./common/themes/vertical_menu.rasi"
 
 FIELDS="NAME,SSID,MODE,CHAN,FREQ,RATE,SIGNAL,BARS,SECURITY,WPA-FLAGS,RSN-FLAGS,IN-USE,BSSID"
-TIMEOUT=3
+TIMEOUT=5
 NMCLI="nmcli -w ${TIMEOUT} -c no -e no -t"
 
 declare -A act

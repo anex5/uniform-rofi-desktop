@@ -20,14 +20,14 @@ source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
 
 # All supported choices
-all=(poweroff reboot suspend hibernate logout lock)
+all=(poweroff reboot suspend hibernate firmware logout lock)
 
 # By default, show all (i.e., just copy the array)
 show=("${all[@]}")
 #show=(poweroff reboot suspend logout lock) 
 
 # By default, ask for confirmation for actions that are irreversible
-confirmations=(reboot poweroff logout)
+confirmations=(reboot poweroff logout firmware)
 
 declare -A act
 act[lock]="${LOCK}"
@@ -37,6 +37,7 @@ act[suspend]="${LOGIND} suspend"
 act[hibernate]="${LOGIND} hibernate"
 act[reboot]="${LOGIND} reboot"
 act[poweroff]="${LOGIND} poweroff"
+act[firmware]="${LOGIND} --firmware-setup reboot"
 
 for i in "${show[@]}"; do
     entries+="$(write_menuentry "${texts[${i}]^}" "false" "${icons[${i}]}" "true")\n"

@@ -23,6 +23,7 @@ icons[suspend]=$(write_span "&#xe370;")
 #icons[suspend]=$(write_span "&#xf0594;")
 icons[logout]=$(write_span "&#xf08b;")
 icons[hibernate]=$(write_span "&#x2b58;")
+icons[firmware]=$(write_span "&#xf06a;")
 icons[lock]=$(write_span "&#xf023;")
 icons[airplane]=$(write_span "&#xf001d;")
 icons[confirmed]="<span font='${icon_font}' foreground='#33ff33' >&#xf0791; </span>"

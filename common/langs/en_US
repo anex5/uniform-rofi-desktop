@@ -66,6 +66,7 @@ texts=(
 [suspend]="suspend"
 [hibernate]="hibernate"
 [reboot]="reboot"
+[firmware]="reboot to firmware"
 [yes]="yes"
 [no]="no"
 [cancel]="cancel"

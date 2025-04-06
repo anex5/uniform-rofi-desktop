@@ -168,7 +168,9 @@ set_bg_image() {
         -filebrowser-directories-first true \
         -filebrowser-directory "${WPSRCDIR/#~/$HOME}" \
         -filebrowser-filter-regex "^.*(?<!\.(jpg|png|bmp|jpeg|webp))$" \
-        -filebrowser-command "echo -en ")"
+        -filebrowser-command "echo -en " \
+        -filebrowser-fallback-icon "image-x-generic" \
+    )"
     #declare -a bgs
     #IFS=$NF read -d '' -a bgs <<< "$(${FIND} ${WPSRCDIR/#~/$HOME} -type f \
     #    -name \*\.jpg -o -name \*\.jpeg -o -name \*\.bmp -o -name \*\.png -o -name \*\.webp)"
@@ -211,7 +213,9 @@ set_bg_video() {
         -filebrowser-directories-first true \
         -filebrowser-directory "${WPSRCDIR/#~/$HOME}" \
         -filebrowser-filter-regex "^.*(?<!\.(avi|mp4|mpeg|ts|webm|wmv))$" \
-        -filebrowser-command "echo -en ")"
+        -filebrowser-command "echo -en " \
+        -filebrowser-fallback-icon "video-x-generic" \
+    )"
     
     if [ -a "${f}" ]; then 
         change_bg ${index} "${f}"
