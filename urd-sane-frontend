@@ -34,7 +34,7 @@ image_mode_menu() {
 
     for i in "${!img_modes[@]}"; do
         enabled=$([[ "${curr_img_mode}" == "${img_modes[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_modes[i]}]:-${img_modes[i]}}" "${icons[${enabled}]}")\n"
+        entries+="$(write_menuentry "${texts[${img_modes[i]}]:-${img_modes[i]}}" "${icons[${enabled}]}")"
         actions+=( "${SCANIMAGE} -n --mode=${img_modes[i]} -d ${device_path}" );
         #; let curr_img_mode=${img_modes[i]}" )
         error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_mode]}")
@@ -55,7 +55,7 @@ image_format_menu() {
 
     for i in "${!img_formats[@]}"; do
         enabled=$([[ "${curr_img_format}" == "${img_formats[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_formats[i]}]:-${img_formats[i]}}" "${enabled}" "${icons[image_format]}" "true")\n"}
+        entries+="$(write_menuentry "${texts[${img_formats[i]}]:-${img_formats[i]}}" "${enabled}" "${icons[image_format]}" "true")"}
         actions+=( "${SCANIMAGE} -n --mode=${img_formats[i]} -d ${device_path}" )
         #;"let curr_img_format=${img_formats[i]}" )
         error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_format]}")
@@ -76,7 +76,7 @@ image_resolution_menu() {
 
     for i in "${!img_resolutions[@]}"; do
         enabled=$([[ "${curr_img_resolution}" == "${img_resolutions[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_resolutions[i]}]:-${img_resolutions[i]}}" "${enabled}" "${icons[image_resolution]}" "true")\n"
+        entries+="$(write_menuentry "${texts[${img_resolutions[i]}]:-${img_resolutions[i]}}" "${enabled}" "${icons[image_resolution]}" "true")"
         actions+=( "let curr_img_resolution=${img_resolutions[i]};" )
         error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_format]}")
     done
@@ -95,7 +95,7 @@ image_depth_menu() {
 
     for i in "${!img_depths[@]}"; do
         enabled=$([[ "${curr_img_depth}" == "${img_depths[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_depths[i]}]:-${img_depths[i]}}" "${enabled}" "${icons[image_depth]}" "true")\n"
+        entries+="$(write_menuentry "${texts[${img_depths[i]}]:-${img_depths[i]}}" "${enabled}" "${icons[image_depth]}" "true")"
         actions+=( "let curr_img_depth=${img_depths[i]}" )
         error_msgs+=("${texts[cant]} ${texts[scanner]} ${texts[image_format]}")
     done
@@ -113,7 +113,7 @@ image_location_menu() {
     entries=""; actions=(); error_msgs=(); confirm=();
 
     #enabled=$([[ "${curr_img_depth}" == "${img_depths[i]}" ]] && echo true || echo false )
-    #entries+="$(write_menuentry "${texts[${img_location}]:-"Image location"} "${icons[file]}")\n"
+    #entries+="$(write_menuentry "${texts[${img_location}]:-"Image location"} "${icons[file]}")"
     #actions+=( " " )
     #error_msgs+=("${texts[cant]} ${texts[scanner]} ${texts[image_format]}")
     
@@ -142,23 +142,23 @@ settings_menu() {
     local device_path="${devices[${1}]##*|}"
     entries=""; actions=(); error_msgs=(); confirm=(); urgent=""; active=""
 
-    entries+="$(write_menuentry "${texts[image_mode]:-"Image mode"}: ${texts[${img_modes[curr_img_mode]}]:-${img_modes[curr_img_mode]}}" "true" "${icons[image_mode]}" "true")\n"
+    entries+="$(write_menuentry "${texts[image_mode]:-"Image mode"}: ${texts[${img_modes[curr_img_mode]}]:-${img_modes[curr_img_mode]}}" "true" "${icons[image_mode]}" "true")"
     actions+=( "image_mode_menu ${1} ${img_modes[curr_img_mode]}" )
     error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_mode]:-"Image mode"}")
 
-    entries+="$(write_menuentry "${texts[image_format]:-"Image format"}: ${texts[${img_formats[curr_img_format]}]:-${img_formats[curr_img_format]}}" "true" "${icons[image_format]}" "true")\n"
+    entries+="$(write_menuentry "${texts[image_format]:-"Image format"}: ${texts[${img_formats[curr_img_format]}]:-${img_formats[curr_img_format]}}" "true" "${icons[image_format]}" "true")"
     actions+=( "image_format_menu ${1} ${img_formats[curr_img_format]}" )
     error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_format]:-"Image format"}")
 
-    entries+="$(write_menuentry "${texts[image_resolution]:-"Image resolution"}: ${texts[${img_resolutions[curr_img_resolution]}]:-${img_resolutions[curr_img_resolution]}} ${texts[ppi]:-ppi}" "false" "${icons[image_resolution]}" "true")\n"
+    entries+="$(write_menuentry "${texts[image_resolution]:-"Image resolution"}: ${texts[${img_resolutions[curr_img_resolution]}]:-${img_resolutions[curr_img_resolution]}} ${texts[ppi]:-ppi}" "false" "${icons[image_resolution]}" "true")"
     actions+=( "image_resolution_menu ${1} ${img_resolutions[curr_img_resolution]}" )
     error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_resolution]:-"Image resolution"}")
 
-    entries+="$(write_menuentry "${texts[image_depth]:-"Image depth"}: ${texts[${img_depths[curr_img_depth]}]:-${img_depths[curr_img_depth]}} ${texts[bits]:-bits}" "false" "${icons[image_depth]}")\n"
+    entries+="$(write_menuentry "${texts[image_depth]:-"Image depth"}: ${texts[${img_depths[curr_img_depth]}]:-${img_depths[curr_img_depth]}} ${texts[bits]:-bits}" "false" "${icons[image_depth]}")"
     actions+=( "image_depth_menu ${1} ${img_depths[curr_img_depth]}" )
     error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_depth]:-"Image depth"}")
 
-    entries+="$(write_menuentry "${texts[image_position]:-"Image position"}: ${texts[curr_img_position]} ${texts[mm]:-mm}" "false" "${icons[image_position]}" "true")\n"
+    entries+="$(write_menuentry "${texts[image_position]:-"Image position"}: ${texts[curr_img_position]} ${texts[mm]:-mm}" "false" "${icons[image_position]}" "true")"
     actions+=( "image_position_menu ${1} ${curr_img_position}" )
     error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_position]:-"Image position"}")
 
@@ -185,22 +185,22 @@ for i in "${!devices[@]}"; do
     device_name="${devices[i]%%|*}"
     device_path="${devices[i]##*|}"
 
-    entries+="$(write_menuentry "${device_name}" "${ready}" "${icons[USB]}" "true")\n"
+    entries+="$(write_menuentry "${device_name}" "${ready}" "${icons[USB]}" "true")"
     actions+=( "settings_menu ${i}" )
     #warn "Device=${devices[i]}"
     #error_msgs+=( "" )
     test -f ${output_file_name}\.${img_formats[curr_img_format]} && scanned="true" || scanned="false"
     [[ "$(${SCANIMAGE} --formatted-device-list="%d")" == "${device_path}" ]] && availiable="true" || availiable="false"
     
-    entries+="$(write_menuentry "<span>${branch[0]}</span>${texts[scan]:-"Scan"}" "${availiable}" "${icons[scan]}" "true")\n"
+    entries+="$(write_menuentry "<span>${branch[0]}</span>${texts[scan]:-"Scan"}" "${availiable}" "${icons[scan]}" "true")"
     actions+=( "${SCANIMAGE} ${device_options} --device-name=${device_path}" )
     error_msgs+=("${texts[cant]:-"Can't"} ${texts[scan]:-"scan"}")
         
-    entries+="$(write_menuentry "<span>${branch[0]}</span>${texts[preview]:-"Prewiew"}" "${availiable}" "${icons[preview]}" "true")\n"
+    entries+="$(write_menuentry "<span>${branch[0]}</span>${texts[preview]:-"Prewiew"}" "${availiable}" "${icons[preview]}" "true")"
     actions+=( "${SCANIMAGE} ${device_options} --device-name=${device_path} --preview=yes" )
     error_msgs+=("${texts[cant]:-"Can't"} ${texts[scan]:-"scan"} ${texts[prewiew]:-"preview"}")
 
-    entries+="$(write_menuentry "<span>${branch[1]}</span>${texts[pick]:-"Pick"} ${texts[image_position]:-"image position and size"}" "${scanned}" "${icons[dimension]}" "true")\n"
+    entries+="$(write_menuentry "<span>${branch[1]}</span>${texts[pick]:-"Pick"} ${texts[image_position]:-"image position and size"}" "${scanned}" "${icons[dimension]}" "true")"
     actions+=( "pick_img_position_and_size ${i}" )
     error_msgs+=("${texts[cant]:-"Can't"} ${texts[pick]:-"pick"} ${texts[image_position]:-"Image position and size"}")
 done

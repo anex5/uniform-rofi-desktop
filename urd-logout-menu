@@ -40,7 +40,7 @@ act[poweroff]="${LOGIND} poweroff"
 act[firmware]="${LOGIND} --firmware-setup reboot"
 
 for i in "${show[@]}"; do
-    entries+="$(write_menuentry "${texts[${i}]^}" "false" "${icons[${i}]}" "true")\n"
+    entries+="$(write_menuentry "${texts[${i}]^}" "false" "${icons[${i}]}" "true")"
     confirm+=( $( [[ "${confirmations[@]}" =~ "${i}" ]] && echo true || echo false) )
     actions+=( "${act[${i}]}" )
     error_msgs+=( "${texts[${i}]} ${texts[failed]:-failed}." )

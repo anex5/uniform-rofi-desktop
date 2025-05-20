@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
+cd "${ORIGIN%/*}"
+LAST="last -T"
+JQ="/usr/bin/jq --unbuffered -r"
+source "./common/definitions"
+prog="${0##*/}"
+args=$*
+nprog=${prog//-/_}
+usage="${texts[usage]}: ${prog} [$texts[options]]
+
+    ${texts[usage_${nprog##*urd_}]^}
+    ${common_usage}
+"
+# parse options
+handle_common_opts "$@"
+source "./common/langs/${default_lang}"
+
+rofiargs="${default_rofiargs} -no-custom -format i "
+
+default_themestr+="element-text { tab-stops: [8em, 13em]; } "
+
+# All supported choices
+all=(user session auth_method login cancel)
+
+# By default, show all (i.e., just copy the array)
+show=("${all[@]}")
+#show=(user session login cancel) 
+
+# By default, ask for confirmation for actions that are irreversible
+confirmations=()
+
+declare -A last_val act
+declare -a users sessions auth_methods
+
+remember_last_user=false
+remember_last_session=false
+remember_last_auth_method=false
+
+act=(
+    [user]="select_user"
+    [session]="select_session"
+    [auth_method]="select_auth_method"
+    [login]="login"
+    [cancel]="./urd-logout-menu"
+)
+
+IFS=$NF read -r -d '' -a users <<< "$(getent passwd | ${GREP} -oP '^[^:]+(?=:x:\d{4}:)')"
+#warn "Users: ${users[0]}"
+if ${remember_last_user}; then
+    last_user="$(${LAST} | ${GREP} 'pts/0' | cut -d$'\t' -f 1 )"
+else
+    last_user="${users[0]}"
+fi
+
+IFS=$NF read -r -d '' -a sessions < "/etc/greetd/environments"
+if ${remember_last_session}; then
+    last_session="$(readlink -q -n /etc/greetd/urd-user-greet-last_session 2>/dev/null || echo ${sessions[0]})"
+else
+    last_session="${sessions[0]}"
+fi
+
+IFS=$NF read -r -d '' -a auth_methods <<< "$(${GREP} auth.*sufficient /etc/pam.d/system-auth | ${SED} -ne "s/^.*\(pam_.*\)\.so.*$/\1/p" )"
+if [[ " ${auth_methods[@]} " =~ " pam_unix " ]]; then continue; else
+    auth_methods+=("pam_unix")
+fi
+
+if ${remember_last_auth_method}; then
+    last_auth_method="$(readlink -q -n /etc/greetd/urd-user-greet-last_auth_method 2>/dev/null | ${SED} -ne "s/^.*\(pam_.*\)\.so/\1/p" || echo pam_unix)"
+else
+    last_auth_method="pam_unix"
+fi
+
+last_val=(
+    [user]=": ${last_user}"
+    [session]=": ${last_session##*/}"
+    [auth_method]=": ${texts[${last_auth_method}]}"
+    [login]=""
+    [cancel]=""
+)
+
+select_user() {
+    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    for i in "${!users[@]}"; do
+        enabled=$([[ "${last_user}" == "${users[i]}" ]] && echo true || echo false )
+        entries+="$(write_menuentry "${users[i]}" "${enabled}" "${icons[user]}")"
+        actions+=( "set last_user=\"${users[i]}\"" )
+        error_msgs+=( "${texts[cant]} ${texts[select]} ${texts[user]}" )
+    done
+    header="${texts[availiable]} ${texts[users]}"
+    theme="./common/themes/vertical_menu.rasi"
+    
+    handle_rofi
+    return $?
+}
+
+select_session() {
+    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    for i in "${!sessions[@]}"; do
+        enabled=$([[ "${last_session}" == "${sessions[i]}" ]] && echo true || echo false )
+        entries+="$(write_menuentry "${sessions[i]}" "${enabled}" "${icons[session]}")"
+        actions+=( "set last_session=\"${sessions[i]}\"" )
+        error_msgs+=( "${texts[cant]} ${texts[select]} ${texts[session]}" )
+    done
+    header="${texts[availiable]} ${texts[sessions]}"
+    theme="./common/themes/vertical_menu.rasi"
+    
+    handle_rofi
+    return $?
+}
+
+select_auth_method() {
+    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    for i in "${!auth_methods[@]}"; do
+        enabled=$([[ "${last_auth_method}" == "${auth_methods[i]}" ]] && echo true || echo false )
+        entries+="$(write_menuentry "${texts[${auth_methods[i]}]^}" "${enabled}" "${icons[${auth_methods[i]/pam_}]}")"
+        actions+=( "set last_auth_method=\"${auth_methods[i]}\"" )
+        error_msgs+=( "${texts[cant]} ${texts[select]} ${texts[auth_method]}" )
+    done
+    header="${texts[availiable]} ${texts[auth_methods]}"
+    theme="./common/themes/vertical_menu.rasi"
+    
+    handle_rofi
+    return $?
+}
+
+login() {
+    send_notification "Login: ${last_user} ${last_session} ${last_auth_method}"
+    GREETDPID < "/run/greetd.pid"
+    echo -e "{\n\ttype: create_session;\n\tusername: ${last_user_name};\n}" > "/proc/$GREETDPID/fd/6"
+}
+
+for i in "${show[@]}"; do
+    entries+="$(write_menuentry "${texts[${i}]^}\t${last_val[${i}]}" "false" "${icons[${i}]}" "true")"
+    confirm+=( $( [[ "${confirmations[@]}" =~ "${i}" ]] && echo true || echo false) )
+    actions+=( "${act[${i}]}" )
+    error_msgs+=( "${texts[${i}]} ${texts[failed]:-failed}." )
+done
+
+header="${texts[header_user_greet]^}"
+theme="./common/themes/vertical_menu.rasi"
+handle_rofi
+

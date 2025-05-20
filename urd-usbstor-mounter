@@ -52,7 +52,7 @@ for i in "${!devices[@]}"; do
     name="$(${LSBLK} -d -o TRAN,VENDOR,MODEL,LABEL "${devices[i]}" 2>/dev/null | ${SED} 's/[[:space:]]\+/ /g;s/\(^[a-z]\+\)/\U\1/')"
     mounted=$(is_mounted "${devices[i]}")
     #warn "${devices[i]} mounted=$mounted"
-    entries+="$(write_menuentry "${name}" "${mounted}" "${icons[USB]}" "true")\n"
+    entries+="$(write_menuentry "${name}" "${mounted}" "${icons[USB]}" "true")"
     actions+=( "${act[${mounted}]} ${devices[i]}" )
     error_msgs+=( "${texts[cant]} ${texts["${act[${mounted}]}%%_*"]} ${texts[device]:-device}: ${devices[i]}" )
     IFS=$NF read -d \" -r -a partitions <<< "$(${LS} ${devices[i]}-part* 2>/dev/null)"
@@ -60,7 +60,7 @@ for i in "${!devices[@]}"; do
         label="$(${LSBLK} -o LABEL ${partitions[j]})"
         mounted=$(is_mounted "${partitions[$j]}")
         name="${label:0:16}\t$(${LSBLK} -o FSTYPE,SIZE "${partitions[j]}" | ${SED} 's/[[:space:]]\+/\t/g;s/</\&\#x003c;/')"
-        entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" "${mounted}" "${icons[partition]}")\n"
+        entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" "${mounted}" "${icons[partition]}")"
         actions+=( "${UDISKSCTL} ${act[${mounted}]%%_*} --no-user-interaction -b ${partitions[j]}" )
         error_msgs+=( "${texts[cant]} ${texts[${act[${mounted}]%%*_}]} ${texts[partition]:-partition}: ${partitions[j]})]}" )
     done

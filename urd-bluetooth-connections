@@ -84,19 +84,19 @@ set_device(){
 
     entries=""; actions=(); error_msgs=(); nocath=();
 
-    entries+="$(write_menuentry "${texts[power]^}" "${bool[${curr_powered}]}" "${icons[power]}" "true")\n"
+    entries+="$(write_menuentry "${texts[power]^}" "${bool[${curr_powered}]}" "${icons[power]}" "true")"
     actions+=( "send_btcmd ${device} power ${toggle[${curr_powered}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[power]}")
     
-    entries+="$(write_menuentry "${texts[btscan]^}" "${bool[${curr_scanning}]}" "${icons[search]}" "true")\n"
+    entries+="$(write_menuentry "${texts[btscan]^}" "${bool[${curr_scanning}]}" "${icons[search]}" "true")"
     actions+=( "send_btcmd ${device} scan ${toggle[${curr_scanning}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[btscan]}")
     
-    entries+="$(write_menuentry "${texts[discoverable]^}" "${bool[${curr_discoverable}]}" "${icons[discoverable]}" "true")\n"
+    entries+="$(write_menuentry "${texts[discoverable]^}" "${bool[${curr_discoverable}]}" "${icons[discoverable]}" "true")"
     actions+=( "send_btcmd ${device} discoverable ${toggle[${curr_discoverable}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[discoverable]}")
     
-    entries+="$(write_menuentry "${texts[pairable]^}" "${bool[${curr_pairable}]}" "${icons[pairable]}" "true")\n"
+    entries+="$(write_menuentry "${texts[pairable]^}" "${bool[${curr_pairable}]}" "${icons[pairable]}" "true")"
     actions+=( "send_btcmd ${device} pairable ${toggle[${curr_pairable}]}" )
     error_msgs+=("${texts[cantset]} ${texts[bluetooth]} ${texts[pairable]}")
 
@@ -125,23 +125,23 @@ set_client(){
 
     entries=""; actions=(); error_msgs=(); active=""; urgent=""
 
-    entries+="$(write_menuentry "${texts[${toggle_paired[$paired]}]^}" "${bool[${paired}]}" "${icons[link]}" "true")\n"
+    entries+="$(write_menuentry "${texts[${toggle_paired[$paired]}]^}" "${bool[${paired}]}" "${icons[link]}" "true")"
     actions+=( "bt_pair ${toggle_paired[${paired}]} ${client}" )
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_paired[${paired}]}]:-"${toggle_paired[${paired}]}"} ${texts[device]} ${name}")
     
-    entries+="$(write_menuentry "${texts[${toggle_connected[$connected]}]^}" "${bool[${connected}]}" "${icons[btconnect]}" "true")\n"
+    entries+="$(write_menuentry "${texts[${toggle_connected[$connected]}]^}" "${bool[${connected}]}" "${icons[btconnect]}" "true")"
     actions+=( "send_btcmd ${device} ${toggle_connected[${connected}]} ${client}" )
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_connected[${connected}]}]:-"${toggle_connected[${connected}]}"} ${texts[device]} ${name}")
     
-    entries+="$(write_menuentry "${texts[${toggle_trusted[$trusted]}]^}" "${bool[${trusted}]}" "${icons[trust]}" "true")\n"
+    entries+="$(write_menuentry "${texts[${toggle_trusted[$trusted]}]^}" "${bool[${trusted}]}" "${icons[trust]}" "true")"
     actions+=( "send_btcmd ${device} ${toggle_trusted[$trusted]} ${client}" )
     error_msgs+=( "${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_trusted[$trusted]}]:-"${toggle_trusted[$trusted]}"} ${texts[device]} ${name}" )
     
-    entries+="$(write_menuentry "${texts[${toggle_blocked[$blocked]}]^}" "${bool[${blocked}]}" "${icons[lock]}" "true")\n"
+    entries+="$(write_menuentry "${texts[${toggle_blocked[$blocked]}]^}" "${bool[${blocked}]}" "${icons[lock]}" "true")"
     actions+=( "send_btcmd ${device} ${toggle_blocked[${blocked}]} ${client}" )
     error_msgs+=("${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_blocked[${blocked}]}]:-"${toggle_blocked[${blocked}]}"} ${texts[device]} ${name}" )
 
-    entries+="$(write_menuentry "${texts[remove]^}" "true" "${icons[trash]}" "true")\n"
+    entries+="$(write_menuentry "${texts[remove]^}" "true" "${icons[trash]}" "true")"
     actions+=( "send_btcmd ${device} remove ${client}" )
     error_msgs+=( "${texts[cantset]^} ${texts[bluetooth]} ${texts[remove]}]:-"remove"} ${texts[device]} ${name}" )
 
@@ -152,7 +152,7 @@ set_client(){
 
 header="${texts[header_bluetooth_connections]^}"
 toggle=$([[ "$(rfkill list bluetooth | ${GREP} "Soft blocked" | cut -d ' ' -f 3-)" =~ "yes" ]] && echo "unblock" || echo "block" )
-entries+="$(write_menuentry "${texts[${toggle}]^} ${texts[bluetooth]} ${texts[capability]}" "${toggle}" "${icons[BT]}" "true")\n"
+entries+="$(write_menuentry "${texts[${toggle}]^} ${texts[bluetooth]} ${texts[capability]}" "${toggle}" "${icons[BT]}" "true")"
 actions+=("rfkill toggle bluetooth")
 error_msgs+=("${texts[canttogglebluetooth]}")
 
@@ -173,7 +173,7 @@ for i in ${!btctl[@]}; do
     bdpowered="$(${GREP} -q "Powered: yes" <<< "${bdinfo[i]}" && echo "on" || echo "off")"
     bdclients="$(${SED} -n "s/Device \(${MACADDR_SEDMASK} .\+\)$/\1/p" <<< "$(echo -en "select ${bdmacaddr}\ndevices\nexit" | ${BTCTL})")"
     clients=(); IFS=$NF read -d '' -a clients <<< "${bdclients}"
-    entries+="$(write_menuentry "${bdname}" "${bool[${bdpowered}]}" "${icons[${busname}]}" "true")\n"
+    entries+="$(write_menuentry "${bdname}" "${bool[${bdpowered}]}" "${icons[${busname}]}" "true")"
     actions+=("set_device ${i} ${bdmacaddr}")
     #warn "Clients: ${clients[@]}"
     #warn "bdinfo: ${bdmacaddr} ${bdpowered}"
@@ -184,7 +184,7 @@ for i in ${!btctl[@]}; do
         btbattery="$( ${SED} -n "s/^.\+Battery Percentage: .\+ (\([0-9]\+\))$/\1/p" <<< "${clientinfo[$j]}" )"
         #btrssi="$( ${SED} -n "s/^.\+RSSI: .\+ (\([-0-9]\+\))$/\1/p" <<< "${clientinfo[$j]}" )"
         btbaticon="$( [ -n "${btbattery}" ] && echo -e "${icons["btbat${btbattery:0:-1}0"]}" || echo -e "")"
-        entries+="$(write_menuentry "$(get_branch_icon "${#clients[@]}" "${j}")${btbaticon} ${clients[j]}" "${bool[${connected}]}" "${icons[${bticon}]}")\n"
+        entries+="$(write_menuentry "$(get_branch_icon "${#clients[@]}" "${j}")${btbaticon} ${clients[j]}" "${bool[${connected}]}" "${icons[${bticon}]}")"
         actions+=("set_client ${j} ${bdmacaddr}") 
     done
 done

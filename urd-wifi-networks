@@ -83,8 +83,8 @@ toggle_wifi() {
 declare -a wlan savedcons
 
 toggle=$([[ "$(${NMCLI} radio wifi)" == "enabled" ]] && echo "block" || echo "unblock" )
-#entries+="$(write_menuentry "${texts[radio${toggle}]:-"Turn WiFi radio ${toggle}"}" "${icons[${toggle}]}")\n"
-entries+="$(write_menuentry "${texts[${toggle}]^} ${texts[wifi]:-"WiFi"} ${texts[capability]:-capability}" "${bool[${toggle}]}" "${icons[WiFi]}" "true")\n"
+#entries+="$(write_menuentry "${texts[radio${toggle}]:-"Turn WiFi radio ${toggle}"}" "${icons[${toggle}]}")"
+entries+="$(write_menuentry "${texts[${toggle}]^} ${texts[wifi]:-"WiFi"} ${texts[capability]:-capability}" "${bool[${toggle}]}" "${icons[WiFi]}" "true")"
 actions+=( "toggle_wifi" )
 error_msgs+=( "${texts[canttogglewifi]:-"Can't toggle WiFi radio"}" )
 
@@ -100,7 +100,7 @@ for i in ${!wlan[@]}; do
     busname="${devname%% *}"
     devname="${texts[${busname}]} ${devname#* }"
     connected="$(is_wlan_up ${wlan[i]} && echo disconnect || echo connect)"
-    entries+="$(write_menuentry "${devname}" "${bool[${connected}]}" "${icons[${busname}]}" "true")\n"
+    entries+="$(write_menuentry "${devname}" "${bool[${connected}]}" "${icons[${busname}]}" "true")"
     actions+=( "toggle_wlan ${wlan[i]}" )
     error_msgs+=( "${texts[canttogglewlan]:-"Can't toggle wlan"}" )
     for j in "${!bss_list[@]}"; do

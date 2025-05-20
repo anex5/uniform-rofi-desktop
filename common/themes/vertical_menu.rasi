@@ -1,5 +1,5 @@
 @import "../themes/hotkeys.rasi"
-@import "../themes/nofilter.rasi"
+//@import "../themes/nofilter.rasi"
 
 window {
     width           : 20em;
@@ -10,6 +10,7 @@ window {
 listview { 
     scrollbar       : false;
     layout          : vertical;
+    flow            : vertical;
     dynamic         : true;
     fixed-height    : false;
     cursor          : "default";

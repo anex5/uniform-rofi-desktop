@@ -41,14 +41,14 @@ while IFS=$NF read -r name ; do
     #name="${line##*\/}"
     #path="${line%\/*}"
     path="${FB_START_DIR}/${name}"
-    entries+="$(write_menuentry "${name}" "false" "$(get_icon ${path})" "true")\n"
+    entries+="$(write_menuentry "${name}" "false" "$(get_icon ${path})" "true")"
     #actions+=( "./${prog} ${args} ${line//\//\\/}" )
     #error_msgs+=( "" )
     #warn "${actions[$i]}"
     #i=$((i+1))
 done <<< "${places}"
 
-#entries+="$(write_menuentry "${texts[select]:-Select}" "false" )\n"
+#entries+="$(write_menuentry "${texts[select]:-Select}" "false" )"
 #actions+=( "echo ${f}" )
 
 handle_rofi

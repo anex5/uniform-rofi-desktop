@@ -25,6 +25,10 @@ icons[logout]=$(write_span "&#xf08b;")
 icons[hibernate]=$(write_span "&#x2b58;")
 icons[firmware]=$(write_span "&#xf06a;")
 icons[lock]=$(write_span "&#xf023;")
+icons[user]=$(write_span "&#xf007;")
+icons[session]=$(write_span "&#xed9f;")
+icons[auth_method]=$(write_span "&#xea8c;")
+icons[login]=$(write_span "&#xf0342;")
 icons[airplane]=$(write_span "&#xf001d;")
 icons[confirmed]="<span font='${icon_font}' foreground='#33ff33' >&#xf0791; </span>"
 icons[toggle]="<span font='${icon_font}' foreground='#33ff33' >&#xf00c; </span>"
@@ -48,13 +52,22 @@ icons[disconnect]="${icons[toggle]}"
 icons[block]="${icons[toggle]}"
 icons[partition]=$(write_span "&#xf0a0;")
 
+icons[password]=$(write_span "&#xf07f5;")
+icons[unix]="${icons[password]}"
+icons[fingerprint]=$(write_span "&#xf0237;")
+icons[fprintd]="${icons[fingerprint]}"
+icons[winbind]=$(write_span "&#xf05b3;")
+icons[ldap]=$(write_span "&#xf0c0c;")
+icons[p11]=$(write_span "&#xf0bc5;")
 icons[USB]=$(write_span "&#xf0553;")
+icons[usb]=$(write_span "&#xf0553;")
 icons[HDMI]=$(write_span "&#xf0841;")
 icons[DP]=$(write_span "&#xf0841;")
 icons[DVI]=$(write_span "&#xf065c;")
 icons[VGA]=$(write_span "&#xf065c;")
 icons[ALC]=$(write_span "&#xf186c;")
 icons[BT]=$(write_span "&#xf293;")
+icons[bluetooth]=$(write_span "&#xf293;")
 icons[PCI]=$(write_span "&#xf061a;")
 icons[WiFi]=$(write_span "&#xf060a;")
 
