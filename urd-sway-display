@@ -291,6 +291,13 @@ change_infill() {
     return $?
 }
 
+is_config_included() {
+    local config_path="${@?${texts[missingarg]:-"Missing argument config path"}}"
+    local display="${displays[${index}]}"
+    local config_name="urd-sway-display-${display#* }"
+    ${GREP} -q "^include ${config_path}/'${config_name##*/}'" "${config_path/\~/${HOME}}/config" && echo true || echo false
+}
+
 is_saved() {
     local index="${1?${texts[missingarg]:-"Missing argument index"}}"; shift
     local display="${displays[${index}]}"
@@ -305,10 +312,6 @@ is_saved() {
     local saved_subpixel=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*subpixel \(.*\)$|\1|p" "${config_name}")
     local saved_adaptive_sync=$(${SED} -ne "/output \"${display#* }\" {/,/}/s|^.*adaptive_sync \(.*\)$|\1|p" "${config_name}")
 
-    #send_notification "$saved_mode | $saved_bg | $saved_position | $saved_scale | $saved_transform | $saved_subpixel | $saved_adaptive_sync"
-    #send_notification "${config_name}"
-    # ${saved_bg//#/} ${last_bg[$index]//|/ }"
-
     if \
         [[ "${saved_bg//#/}" == "${last_bg[$index]//|/ }" ]] &&\
         [[ "${saved_mode}" == "${curr_modes[$index]:0:-3}.${curr_modes[$index]: -3}Hz" ]] &&\
@@ -316,7 +319,8 @@ is_saved() {
         [[ "${saved_scale}" == "${scales[$index]}" ]] &&\
         [[ "${saved_transform}" == "${transforms[$index]}" ]] &&\
         [[ "${saved_subpixel}" == "${hintings[$index]}" ]] &&\
-        [[ "${saved_adaptive_sync}" == "${power[${adsyncs[$index]}]}" ]]; then 
+        [[ "${saved_adaptive_sync}" == "${power[${adsyncs[$index]}]}" ]] &&\
+        [[ "$(is_config_included "${config_path}")" == "true" ]]; then 
         echo true
     else
         echo false
@@ -332,9 +336,9 @@ save_settings() {
     
     local config_path="~/.config/sway"
     local config_name="${config_path/\~/${HOME}}/urd-sway-display-${display#* }"
-    local config_included="$(${GREP} -q "include ${config_path}/'${config_name##*/}'" "${config_path}/config" && echo true || echo false)"
-    test ${config_included} || echo -e "include ${config_path}/'${config_name##*/}'" >> "${config_path}/config"
-        
+    #local config_included="$(${GREP} -q "^include ${config_path}/'${config_name##*/}'" "${config_path\~/${HOME}}/config" && echo true || echo false)"
+    $(is_config_included "${config_path}") || echo -e "include ${config_path}/'${config_name##*/}'" >> "${config_path/\~/${HOME}}/config" || send_notification "${texts[failed]} ${texts[write]} ${config_path/\~/${HOME}}/config"
+    
     echo -e "output \"${display#* }\" {" > "${config_name}"
     echo -e "    mode ${curr_modes[$index]:0:-3}.${curr_modes[$index]: -3}Hz" >> "${config_name}"
     echo -e "    bg ${bgname} ${bginfill} #${bgcolor}" >> "${config_name}"

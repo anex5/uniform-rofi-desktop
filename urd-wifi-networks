@@ -110,7 +110,7 @@ for i in ${!wlan[@]}; do
         cname="${ssid:-"${bssid//:/}"}"
         saved="$([[ " ${savedcons[*]} " =~ " ${cname} " ]] && echo -e "${icons[confirmed]}" )"
         entries+="$(write_menuentry "$(get_branch_icon "${#bss_list[@]}" "${j}") ${cname:0:20} ${saved} \
-\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${security}</span></tt>" "${bool[${connected}]}" "${icons[${bars}]}" )\n"
+\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${security}</span></tt>" "${bool[${connected}]}" "${icons[${bars}]}" )"
         actions+=("${act[$connected]} ${ssid} ${bssid} ${security}")
         error_msgs+=("${texts[cant${connected}]}")
     done
