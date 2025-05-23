@@ -16,7 +16,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_common_opts "$@"
 source "./common/langs/${default_lang}"
 rofiargs="${default_rofiargs} -no-custom -format i "
-header="${texts[header_pipewire_sink]}"
+header="${texts[header_pipewire_sinks]}"
 theme="./common/themes/vertical_menu.rasi"
 
 declare -A act
