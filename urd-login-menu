@@ -125,9 +125,9 @@ select_auth_method() {
 }
 
 login() {
-    send_notification "Login: ${last_user} ${last_session} ${last_auth_method}"
-    GREETDPID < "/run/greetd.pid"
-    echo -e "{\n\ttype: create_session;\n\tusername: ${last_user_name};\n}" > "/proc/$GREETDPID/fd/6"
+    GREETDPID=$(< "/run/greetd.pid")
+    send_notification "Login: ${last_user} ${last_session} ${last_auth_method} ${GREETDPID}"
+    echo -e "\{\n\ttype: create_session;\n\tusername: ${last_user};\n\}" #> "/proc/${GREETDPID}/fd/6"
 }
 
 for i in "${show[@]}"; do

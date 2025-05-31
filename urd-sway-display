@@ -361,19 +361,19 @@ set_backgrounds() {
 
     entries+="$(write_menuentry "${texts[infills]^}: ${texts[${infill}]^}" "false" "${icons[displayinfill]}" "true")"
     actions+=( "set_bg_infill ${i}" )
-    error_msgs+=( "" ) #${texts[cantset]} ${texts[background]} ${texts[infill]}" )
+    error_msgs+=( "" ) 
 
     entries+="$(write_menuentry "${texts[solidcolor]^}" "$(is_solid ${last_bg[${index}]%%|*})" "<span background=\"#${last_bg[$index]##*|}\">\U3000</span>" "true")"
     actions+=( "set_bg_solid_color ${i}" )
-    error_msgs+=( "" ) #${texts[cantset]} ${texts[display]} ${texts[solidcolor]} ${texts[background]}" )
-    
+    error_msgs+=( "" ) 
+
     entries+="$(write_menuentry "${texts[image]^}" "$(is_image ${last_bg[${index}]%%|*})" "${icons[imagefile]}" "true")"
     actions+=( "set_bg_image ${i}" )
-    error_msgs+=( "" ) #${texts[cantset]} ${texts[display]} ${texts[image]} ${texts[background]}" )
-    
+    error_msgs+=( "" ) 
+
     entries+="$(write_menuentry "${texts[video]^}" "$(is_video ${last_bg[${index}]%%|*})" "${icons[videofile]}" "true")"
     actions+=( "set_bg_video ${i}" )
-    error_msgs+=( "" ) #${texts[cantset]} ${texts[display]} ${texts[video]} ${texts[background]}" )
+    error_msgs+=( "" )
 
     header="${texts[availiable]} ${texts[display]} ${texts[backgrounds]}"
     theme="./common/themes/vertical_menu.rasi"

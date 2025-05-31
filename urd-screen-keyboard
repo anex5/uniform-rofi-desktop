@@ -15,13 +15,39 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 "
 # parse options
 handle_common_opts "$@"
-rofiargs="${default_rofiargs} -no-custom -format p "
+rofiargs="${default_rofiargs} -keepselection -format p"
 
-header="${texts[header_screen-keyboard]:-Screen Keyboard}"
-theme="./common/themes/vertical_querty_40.rasi"
+header="${texts[header_screen-keyboard]:-Screen keyboard}"
+keys="./common/keyboards/QUERTY_en-US_40-keys"
+theme="./common/themes/horizontal_keyboard.rasi"
 
-entries="1\n2\n3\n4\n5\n6\n7\n8\n9\n0\nq\nw\ne\nr\nt\ny\nu\ni\no\np\na\ns\nd\nf\ng\nh\nj\nk\nl\net\nsh\nz\nx\nc\nv\nb\nn\nm\nsp\nctrl"
+#while true; do
+    declare -i rofi_ret
+    declare chosen_key
+    get_script_opts "${rofiargs@Q}"
+	[ -n "${prompt}" ] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
+    [ -n "${header}" ] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
+    [ -n "${data}" ] && echo -e "\x00data\x1f${data}"
+    [ -n "${keepselection}" ] && echo -e "\x00keep-selection\x1f${keepselection}"
+    [ -n "${newselection}" ] && echo -e "\x00new-selection\x1f${newselection}"
 
-#entries="$(echo -n "${entries}" | ${SED} 's/./\n/3;P;D' )"
+    case ${ROFI_RETV} in
+        "") # script called directly
+            ${ROFI} ${rofiargs// -dmenu} -modi "urd:./${prog} ${args@Q}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}"
+        ;;
+        0) # rofi: initial call of script
+  	        cat "${keys}"
+        ;;
+        1) # rofi: selected an entry
+            filter+="$*"
+        ;;
+        2) # rofi: selected custom entry
+            warn "Selected custom-entry..."
+        ;;
+    esac
 
-handle_rofi
+    #chosen_key=$(${ROFI} ${rofiargs} -input "${keys}" -filter "${filter}" -cycle -mesg "${header}" \
+    #    -select "${chosen_key}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}" ) 
+
+#done
+
