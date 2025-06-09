@@ -43,6 +43,9 @@ script_opts=(
     [theme-str]="theme"
     [no-custom]="no-custom"
     [use-hot-keys]="use-hot-keys"
+    [keep-filter]="keep-filter"
+    [keep-selection]="keep-selection"
+    [new-selection]="new-selection"
 )
 
 declare -A anchors
@@ -97,8 +100,7 @@ handle_common_opts() {
                     unset -f texts
                     common_usage=''
                     default_lang="${2}"
-                    #send_notification ${2}
-                    source ./common/langs/"${default_lang}" || die -1 "${texts[nofile]} ./common/langs/${default_lang}"
+                    source "./common/langs/${default_lang}"
                 fi
                 shift 2
   	        ;;
@@ -147,9 +149,6 @@ write_script_entries() {
     [[ -n "${prompt}" ]] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
     [[ -n "${header}" ]] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
     [[ -n "${ROFI_DATA}" ]] && echo -e "\x00data\x1f${ROFI_DATA}"
-    [[ -n "${keepfilter}" ]] && echo -e "\x00keep-filter\x1f${keepfilter}"
-    [[ -n "${keepselection}" ]] && echo -e "\x00keep-selection\x1f${keepselection}"
-    [[ -n "${newselection}" ]] && echo -e "\x00new-selection\x1f${newselection}"
     echo -en "${entries}"
 }
 
