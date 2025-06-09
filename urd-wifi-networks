@@ -13,8 +13,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 
 # parse options
 handle_common_opts "$@"
-source "./common/langs/${default_lang}"
-rofiargs="${default_rofiargs} -no-custom -format i "
+rofiargs+=" -dmenu"
 default_themestr+="element-text { tab-stops: [10em, 13em]; } "
 header="${texts[header_wifi_networks]}"
 theme="./common/themes/vertical_menu.rasi"
@@ -83,15 +82,14 @@ toggle_wifi() {
 declare -a wlan savedcons
 
 toggle=$([[ "$(${NMCLI} radio wifi)" == "enabled" ]] && echo "block" || echo "unblock" )
-#entries+="$(write_menuentry "${texts[radio${toggle}]:-"Turn WiFi radio ${toggle}"}" "${icons[${toggle}]}")"
-entries+="$(write_menuentry "${texts[${toggle}]^} ${texts[wifi]:-"WiFi"} ${texts[capability]:-capability}" "${bool[${toggle}]}" "${icons[WiFi]}" "true")"
-actions+=( "toggle_wifi" )
-error_msgs+=( "${texts[canttogglewifi]:-"Can't toggle WiFi radio"}" )
+entries="$(write_menuentry "${texts[${toggle}]^} ${texts[wifi]} ${texts[capability]}" "toggle_wifi" \
+    "${icons[WiFi]}" "${bool[${toggle}]}" "true" "false" "false" "false" \
+    "${texts[canttogglewifi]}" \
+)"
 
 IFS=$NF read -r -d '' -a wlan <<< "$(ls -A1 /sys/class/net | ${SED} -n 's/^\(wl.*\)/\1/p' )"
 IFS=$NF read -r -d '' -a savedcons <<< "$(${NMCLI} -f NAME,TYPE con | ${SED} -n 's/^\(.\+\):802-11-wireless/\1/p' )"
 [[ ${#wlan[@]} -eq 0 ]] && die -1 "${texts[nowifidevice]}"
-#warn "${wlan[@]}"
 
 for i in ${!wlan[@]}; do
     nmcli_bss_list="$(${NMCLI} -f ${FIELDS} device wifi list ifname ${wlan[i]} --rescan auto)"
@@ -99,10 +97,12 @@ for i in ${!wlan[@]}; do
     devname="$(${SED} -n 's/^\(.\+\):v\([0-9A-Z]\+\)[a-z]\([0-9A-Z]\+\)[a-z].*$/get_device_name "\U\1" \"\L\2\" \"\L\3\" \"\/usr\/share\/hwdata\/\1.ids\"\n/ep' /sys/class/net/${wlan[i]}/device/modalias )"
     busname="${devname%% *}"
     devname="${texts[${busname}]} ${devname#* }"
-    connected="$(is_wlan_up ${wlan[i]} && echo disconnect || echo connect)"
-    entries+="$(write_menuentry "${devname}" "${bool[${connected}]}" "${icons[${busname}]}" "true")"
-    actions+=( "toggle_wlan ${wlan[i]}" )
-    error_msgs+=( "${texts[canttogglewlan]:-"Can't toggle wlan"}" )
+    connected="$(is_wlan_up ${wlan[i]} && echo disconnect || echo connect )"
+    entries+="$(write_menuentry "${devname}" \
+        "toggle_wlan ${wlan[i]}" \
+        "${icons[${busname}]}" "${bool[${connected}]}" "true" "false" "false" \
+        "${texts[canttogglewlan]}" \
+    )"
     for j in "${!bss_list[@]}"; do
         parse_entry "${bss_list[j]}"
         connected="$([[ "${in_use}" == "*" ]] && echo disconnect || echo connect )"
@@ -110,9 +110,11 @@ for i in ${!wlan[@]}; do
         cname="${ssid:-"${bssid//:/}"}"
         saved="$([[ " ${savedcons[*]} " =~ " ${cname} " ]] && echo -e "${icons[confirmed]}" )"
         entries+="$(write_menuentry "$(get_branch_icon "${#bss_list[@]}" "${j}") ${cname:0:20} ${saved} \
-\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${security}</span></tt>" "${bool[${connected}]}" "${icons[${bars}]}" )"
-        actions+=("${act[$connected]} ${ssid} ${bssid} ${security}")
-        error_msgs+=("${texts[cant${connected}]}")
+\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${security}</span></tt>" \
+            "${act[$connected]} ${ssid} ${bssid} ${security}" \
+            "${icons[${bars}]}" "${bool[${connected}]}" "false" "false" "false" \
+            "${texts[cant${connected}]}" \
+        )"
     done
 done
 

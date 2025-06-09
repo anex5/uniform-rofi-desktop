@@ -2,7 +2,7 @@
 ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
 LOCK="swaylock -f -c 000000"
-LOGIND="loginctl"
+LOGIND="loginctl --no-ask-password"
 RDEPS="${LOCK},${LOGIND},"
 source "./common/definitions"
 prog="${0##*/}"
@@ -15,9 +15,8 @@ usage="${texts[usage]}: ${prog} [$texts[options]]
 "
 # parse options
 handle_common_opts "$@"
-source "./common/langs/${default_lang}"
 
-rofiargs="${default_rofiargs} -no-custom -format i "
+rofiargs+=" -dmenu"
 
 # All supported choices
 all=(poweroff reboot suspend hibernate firmware logout lock)
@@ -26,24 +25,21 @@ all=(poweroff reboot suspend hibernate firmware logout lock)
 show=("${all[@]}")
 #show=(poweroff reboot suspend logout lock) 
 
-# By default, ask for confirmation for actions that are irreversible
-confirmations=(reboot poweroff logout firmware)
-
 declare -A act
 act[lock]="${LOCK}"
 #act[lock]="${LOGIND} lock-session ${XDG_SESSION_ID-}"
-act[logout]="${LOGIND} kill-user $USER"
+act[logout]="confirm ${LOGIND} kill-user ${USER}"
 act[suspend]="${LOGIND} suspend"
 act[hibernate]="${LOGIND} hibernate"
-act[reboot]="${LOGIND} reboot"
-act[poweroff]="${LOGIND} poweroff"
-act[firmware]="${LOGIND} --firmware-setup reboot"
+act[reboot]="confirm ${LOGIND} reboot"
+act[poweroff]="confirm ${LOGIND} poweroff"
+act[firmware]="confirm ${LOGIND} --firmware-setup reboot"
 
 for i in "${show[@]}"; do
-    entries+="$(write_menuentry "${texts[${i}]^}" "false" "${icons[${i}]}" "true")"
-    confirm+=( $( [[ "${confirmations[@]}" =~ "${i}" ]] && echo true || echo false) )
-    actions+=( "${act[${i}]}" )
-    error_msgs+=( "${texts[${i}]} ${texts[failed]:-failed}." )
+    entries+="$(write_menuentry "${texts[${i}]^}" "${act[${i}]}" \
+        "${icons[${i}]}" "false" "true" "false" "false" \
+        "${texts[${i}]} ${texts[failed]}." \
+    )"
 done
 
 header="${texts[header_logout_menu]^}"

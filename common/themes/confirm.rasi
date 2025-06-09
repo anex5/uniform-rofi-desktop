@@ -9,6 +9,7 @@ textbox {
 listview { 
     scrollbar       : false;
     layout          : vertical;
+    flow            : horizontal;
     columns         : 2;
     lines           : 1;
 }

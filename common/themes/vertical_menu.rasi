@@ -44,7 +44,7 @@ element-text {
     text-color: inherit;
     markup: true;
     expand: true;
-    tab-stops: [50%];
+    tab-stops: [9em];
 }
 
 element-icon {

@@ -15,8 +15,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 "
 # parse options
 handle_common_opts "$@"
-source "./common/langs/${default_lang}"
-rofiargs="${default_rofiargs} -no-custom -format i "
+#source "./common/langs/${default_lang}"
 default_themestr+="element-text { tab-stops: [8em, 12em]; } "
 header="${texts[header_usbstor_mounter]}"
 theme="./common/themes/vertical_menu.rasi"
@@ -29,14 +28,14 @@ is_mounted() {
 mount_all() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"
     for part in ${device}-part?*; do 
-        ${UDISKSCTL} mount -b ${part} --no-user-interaction
+        ${UDISKSCTL} mount -b ${part}
     done
 }
 
 unmount_all() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"
     for part in ${device}-part?*; do 
-        ${UDISKSCTL} unmount -b ${part} --no-user-interaction
+        ${UDISKSCTL} unmount -b ${part}
     done
     ${UDISKSCTL} power-off -b ${device} && send_notification "${texts[usbpoweroff]}" || send_notification "${texts[cantusbpoweroff]}"
 }
@@ -52,17 +51,21 @@ for i in "${!devices[@]}"; do
     name="$(${LSBLK} -d -o TRAN,VENDOR,MODEL,LABEL "${devices[i]}" 2>/dev/null | ${SED} 's/[[:space:]]\+/ /g;s/\(^[a-z]\+\)/\U\1/')"
     mounted=$(is_mounted "${devices[i]}")
     #warn "${devices[i]} mounted=$mounted"
-    entries+="$(write_menuentry "${name}" "${mounted}" "${icons[USB]}" "true")"
-    actions+=( "${act[${mounted}]} ${devices[i]}" )
-    error_msgs+=( "${texts[cant]} ${texts["${act[${mounted}]}%%_*"]} ${texts[device]:-device}: ${devices[i]}" )
+    entries+="$(write_menuentry "${name}" \
+        "${act[${mounted}]} ${devices[i]}" \
+        "${icons[USB]}" "${mounted}" "true" "false" "false" \
+        "${texts[cant]} ${texts["${act[${mounted}]}%%_*"]} ${texts[device]}: ${devices[i]}" \
+    )"
     IFS=$NF read -d \" -r -a partitions <<< "$(${LS} ${devices[i]}-part* 2>/dev/null)"
     for j in "${!partitions[@]}"; do
         label="$(${LSBLK} -o LABEL ${partitions[j]})"
         mounted=$(is_mounted "${partitions[$j]}")
         name="${label:0:16}\t$(${LSBLK} -o FSTYPE,SIZE "${partitions[j]}" | ${SED} 's/[[:space:]]\+/\t/g;s/</\&\#x003c;/')"
-        entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" "${mounted}" "${icons[partition]}")"
-        actions+=( "${UDISKSCTL} ${act[${mounted}]%%_*} --no-user-interaction -b ${partitions[j]}" )
-        error_msgs+=( "${texts[cant]} ${texts[${act[${mounted}]%%*_}]} ${texts[partition]:-partition}: ${partitions[j]})]}" )
+        entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" \
+            "${UDISKSCTL} ${act[${mounted}]%%_*} -b ${partitions[j]}" \
+            "${icons[partition]}" "${mounted}" "false" "false" "false" \
+            "${texts[cant]} ${texts[${act[${mounted}]%%*_}]} ${texts[partition]}: ${partitions[j]})]}" \
+        )"
     done
 done
 

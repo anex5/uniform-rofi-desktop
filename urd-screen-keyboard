@@ -15,39 +15,31 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 "
 # parse options
 handle_common_opts "$@"
-rofiargs="${default_rofiargs} -keepselection -format p"
 
+rofiargs="${rofiargs// -keep-filter} -keep-filter"
 header="${texts[header_screen-keyboard]:-Screen keyboard}"
-keys="./common/keyboards/QUERTY_en-US_40-keys"
+keys="./common/keyboards/QUERTY_en-US_40.keys"
 theme="./common/themes/horizontal_keyboard.rasi"
 
-#while true; do
-    declare -i rofi_ret
-    declare chosen_key
-    get_script_opts "${rofiargs@Q}"
-	[ -n "${prompt}" ] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
-    [ -n "${header}" ] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
-    [ -n "${data}" ] && echo -e "\x00data\x1f${data}"
-    [ -n "${keepselection}" ] && echo -e "\x00keep-selection\x1f${keepselection}"
-    [ -n "${newselection}" ] && echo -e "\x00new-selection\x1f${newselection}"
+entries="$(<${keys})"
 
-    case ${ROFI_RETV} in
-        "") # script called directly
-            ${ROFI} ${rofiargs// -dmenu} -modi "urd:./${prog} ${args@Q}" -show urd -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}"
-        ;;
-        0) # rofi: initial call of script
-  	        cat "${keys}"
-        ;;
-        1) # rofi: selected an entry
-            filter+="$*"
-        ;;
-        2) # rofi: selected custom entry
-            warn "Selected custom-entry..."
-        ;;
-    esac
+handle_rofi
 
-    #chosen_key=$(${ROFI} ${rofiargs} -input "${keys}" -filter "${filter}" -cycle -mesg "${header}" \
-    #    -select "${chosen_key}" -theme-str "@import \"${theme}\"" -theme-str "${default_themestr}" ) 
-
-#done
-
+#send_notification "After handle rofi. RETV=${ROFI_RETV}"
+if ${force_dmenu} ; then
+	  case ${ROFI_RETV} in
+				0) # Restart after selection
+						exec ./${prog} ${args// -arg *} -arg "-f ${chosen}"
+				;;
+	  esac
+else
+		case ${ROFI_RETV} in
+				10) # set 
+						wtype "${args}" && send_notification "${texts[copied]^}: ${args}" || die
+				;;
+				0) # Restart after selection
+						keepselection=true
+						write_script_entries
+				;;
+		esac
+fi

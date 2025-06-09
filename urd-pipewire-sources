@@ -14,8 +14,6 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 "
 # parse options
 handle_common_opts "$@"
-source "./common/langs/${default_lang}"
-rofiargs="${default_rofiargs} -no-custom -format i "
 header="${texts[header_pipewire_sources]}"
 theme="./common/themes/vertical_menu.rasi"
 
@@ -33,9 +31,11 @@ for i in "${!devices[@]}"; do
     ids="$(${SED} -n "s/^[* ]\+\([0-9]\+\).*$/\1/p" <<< ${str})"
     name="$(${SED} -n "s/^[* ]\+[0-9]\+\. \([^\[]\+\).*$/\1/p" <<< ${str})"
     device="$(${WPCTL} inspect ${ids} | ${SED} -n 's/^ \+api\.alsa\.pcm\.id = \"\([A-Z]\+\).*\"/\1/p')"
-    entries+="$(write_menuentry "${icons[vol${volume// }]} ${name}" "${bool[${enabled}]}" "${icons[${device}]}")"
-    actions+=( "${act[${enabled}]} ${ids} ${enabled}" )
-    error_msgs+=( "${texts[cant]:-"Can't"} ${texts[set]:-"set"} ${texts[audiosource]:-audio source}" )
+    entries+="$(write_menuentry "${icons[vol${volume// }]} ${name}" \
+        "${act[${enabled}]} ${ids} ${enabled}" \
+        "${icons[${device}]}" "${bool[${enabled}]}" "false" "false" "false" \
+        "${texts[cant]:-"Can't"} ${texts[set]:-"set"} ${texts[audiosource]:-audio source}" \
+    )"
 done
 
 handle_rofi

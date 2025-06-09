@@ -20,7 +20,7 @@ icon-pass {
     margin          : 0;
     spacing         : 0;
     expand          : false;
-    filename        : "./common/svg/search.svg";
+    filename        : "system-search";
     size            : 1.0em;
 }
 textbox {

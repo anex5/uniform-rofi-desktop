@@ -14,11 +14,8 @@ usage="${texts[usage]}: ${prog} [$texts[options]]
 "
 # parse options
 handle_common_opts "$@"
-source "./common/langs/${default_lang}"
 
-rofiargs="${default_rofiargs} -no-custom -format i "
-
-default_themestr+="element-text { tab-stops: [8em, 13em]; } "
+default_themestr+=" element-text { tab-stops: [8em, 13em]; }"
 
 # All supported choices
 all=(user session auth_method login cancel)
@@ -26,9 +23,6 @@ all=(user session auth_method login cancel)
 # By default, show all (i.e., just copy the array)
 show=("${all[@]}")
 #show=(user session login cancel) 
-
-# By default, ask for confirmation for actions that are irreversible
-confirmations=()
 
 declare -A last_val act
 declare -a users sessions auth_methods
@@ -61,7 +55,7 @@ else
 fi
 
 IFS=$NF read -r -d '' -a auth_methods <<< "$(${GREP} auth.*sufficient /etc/pam.d/system-auth | ${SED} -ne "s/^.*\(pam_.*\)\.so.*$/\1/p" )"
-if [[ " ${auth_methods[@]} " =~ " pam_unix " ]]; then continue; else
+if [[ " ${auth_methods[@]} " =~ " pam_unix " ]]; then :; else 
     auth_methods+=("pam_unix")
 fi
 
@@ -80,12 +74,16 @@ last_val=(
 )
 
 select_user() {
-    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    local -i i=0
+    local enabled="false"
+    entries="";
     for i in "${!users[@]}"; do
         enabled=$([[ "${last_user}" == "${users[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${users[i]}" "${enabled}" "${icons[user]}")"
-        actions+=( "set last_user=\"${users[i]}\"" )
-        error_msgs+=( "${texts[cant]} ${texts[select]} ${texts[user]}" )
+        entries+="$(write_menuentry "${users[i]}" \
+            "set last_user=\"${users[i]}\"" \
+            "${icons[user]}" "${enabled}" "true" "false" "false" \
+            "${texts[cant]} ${texts[select]} ${texts[user]}" \
+        )"
     done
     header="${texts[availiable]} ${texts[users]}"
     theme="./common/themes/vertical_menu.rasi"
@@ -95,12 +93,16 @@ select_user() {
 }
 
 select_session() {
-    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    local -i i=0
+    local enabled="false"
+    entries="";
     for i in "${!sessions[@]}"; do
         enabled=$([[ "${last_session}" == "${sessions[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${sessions[i]}" "${enabled}" "${icons[session]}")"
-        actions+=( "set last_session=\"${sessions[i]}\"" )
-        error_msgs+=( "${texts[cant]} ${texts[select]} ${texts[session]}" )
+        entries+="$(write_menuentry "${sessions[i]}" \
+            "set last_session=\"${sessions[i]}\"" \
+            "${icons[session]}" "${enabled}" "true" "false" "false" \
+            "${texts[cant]} ${texts[select]} ${texts[session]}" \
+        )"
     done
     header="${texts[availiable]} ${texts[sessions]}"
     theme="./common/themes/vertical_menu.rasi"
@@ -110,12 +112,16 @@ select_session() {
 }
 
 select_auth_method() {
-    entries=""; actions=(); error_msgs=(); confirm=(); nocatch=();
+    entries="";
+    local -i i=0
+    local enabled="false"
     for i in "${!auth_methods[@]}"; do
         enabled=$([[ "${last_auth_method}" == "${auth_methods[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${auth_methods[i]}]^}" "${enabled}" "${icons[${auth_methods[i]/pam_}]}")"
-        actions+=( "set last_auth_method=\"${auth_methods[i]}\"" )
-        error_msgs+=( "${texts[cant]} ${texts[select]} ${texts[auth_method]}" )
+        entries+="$(write_menuentry "${texts[${auth_methods[i]}]^}" \
+            "set last_auth_method=\"${auth_methods[i]}\"" \
+            "${icons[${auth_methods[i]/pam_}]}" "${enabled}" "true" "false" "false" \
+            "${texts[cant]} ${texts[select]} ${texts[auth_method]}"
+        )"
     done
     header="${texts[availiable]} ${texts[auth_methods]}"
     theme="./common/themes/vertical_menu.rasi"
@@ -126,15 +132,14 @@ select_auth_method() {
 
 login() {
     GREETDPID=$(< "/run/greetd.pid")
-    send_notification "Login: ${last_user} ${last_session} ${last_auth_method} ${GREETDPID}"
-    echo -e "\{\n\ttype: create_session;\n\tusername: ${last_user};\n\}" #> "/proc/${GREETDPID}/fd/6"
+    #send_notification "Login: ${last_user} ${last_session} ${last_auth_method} ${GREETDPID}"
+    echo -e "\{\n\ttype: create_session;\n\tusername: ${last_user};\n\}" > "/proc/${GREETDPID}/fd/6"
 }
 
 for i in "${show[@]}"; do
-    entries+="$(write_menuentry "${texts[${i}]^}\t${last_val[${i}]}" "false" "${icons[${i}]}" "true")"
-    confirm+=( $( [[ "${confirmations[@]}" =~ "${i}" ]] && echo true || echo false) )
-    actions+=( "${act[${i}]}" )
-    error_msgs+=( "${texts[${i}]} ${texts[failed]:-failed}." )
+    entries+="$(write_menuentry "${texts[${i}]^}\t${last_val[${i}]}" \
+        "${act[${i}]}" "${icons[${i}]}" "false" "true" \
+    )"
 done
 
 header="${texts[header_user_greet]^}"

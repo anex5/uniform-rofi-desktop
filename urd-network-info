@@ -6,7 +6,7 @@ NMCLI="nmcli -w ${TIMEOUT} -c no -e no -t"
 RDEPS="${NMCLI},"
 source "./common/definitions"
 prog="${0##*/}"
-args=$*
+args="$*"
 nprog=${prog//-/_}
 usage="${texts[usage]}: ${prog} [${texts[options]}]
 
@@ -16,9 +16,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 
 # parse options
 handle_common_opts "$@"
-source "./common/langs/${default_lang}"
-
-rofiargs="${default_rofiargs} -no-custom -format i "
+rofiargs+=" -dmenu"
 default_themestr+="element-text { tab-stops: [6em]; } "
 header="${texts[header_network_info]^}"
 theme="./common/themes/vertical_menu.rasi"
@@ -27,27 +25,22 @@ show_netdev_info() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"
     local -a info 
     IFS=$NF read -r -d '' -a info <<< $(${NMCLI} dev show ${device})
-    entries=""; actions=(); error_msgs=(); confirm=();
+    entries=""
     for i in ${!info[@]}; do
-        left_info=${info[i]%%:*}
-        entries+="$(write_menuentry "${left_info:0:16}:\t${info[i]#*:}")"
-        error_msgs+=( "${texts[cant]}^} ${texts[copy]}" )
+        left_info="${info[i]%%:*}"
+        entries+="$(write_menuentry "${left_info:0:16}:\t${info[i]#*:}" \
+            "wl-copy -p ${info[i]#*:}" \
+            "" "false" "false" "false" "false" \
+            "${texts[cant]^} ${texts[copy]} ${info[i]#*:}" \
+        )"
     done
-    header="${texts[header_networkdeviceinfo]:-Network device info} ${device}"
+    header="${texts[header_networkdeviceinfo]} ${device}"
     theme="./common/themes/vertical_menu.rasi"
+    rofiargs="${rofiargs// -no-show-icons} -no-show-icons"
     default_themestr+="element-text { tab-stops: [9em]; } "
     default_themestr+="element-icon { enabled: false; } "
     default_themestr+="button-toggle { enabled: false; } "
     handle_rofi
-
-    case ${rofi_ret} in
-    0)  # copy selected row value
-		wl-copy -p "${info[${chosen_row}]#*:}" 2>/dev/null
-		send_notification "${texts[copied]:-Copied}: ${info[${chosen_row}]#*:}"
-    ;;
-    1)  # Cancelled by user
-        die 0 "${texts[canceled]:-"Cancelled..."}"
-    esac
 }
 
 declare -a netdev
@@ -59,9 +52,10 @@ for i in ${!netdev[@]}; do
     IFS=':' read -r -d '' name type connected connection <<< "${netdev[i]}"
     #warn "${name} ${type} ${connection//[$'\t\r\n']} ${connected}"
     enabled="$([[ " ${connected} " =~ " connected " ]] && echo true || echo false)"
-    entries+="$(write_menuentry "${type^}\t${name} ${connection//[$'\t\r\n']}" "${enabled}" "${icons[${type%%-*}]:-""}")"
-    actions+=( "show_netdev_info ${name}" )
-    nocatch+=( "true" )
+    entries+="$(write_menuentry "${type^}\t${name} ${connection//[$'\t\r\n']}" \
+        "show_netdev_info ${name}" \
+        "${icons[${type%%-*}]:-""}" "${enabled}" \
+    )"
 done
 
 handle_rofi

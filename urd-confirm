@@ -27,12 +27,11 @@ while [ "$#" -ge 1 ]; do
 done
 
 handle_common_opts "$@"
-rofiargs="${default_rofiargs} -no-custom -format i "
 
-entries+="$(write_menuentry "${texts[confirm]^}" "false" "${icons[yes]}" "true")"
-entries+="$(write_menuentry "${texts[cancel]^}" "false" "${icons[cancel]}" "true")"
+entries+="$(write_menuentry "${texts[confirm]^}" " " "${icons[yes]}" "false" "true" "false" "false")"
+entries+="$(write_menuentry "${texts[cancel]^}" " " "${icons[cancel]}" "false" "true" "false" "false")"
 
-chosen=$(echo -en "${entries}" | ${ROFI} ${rofiargs} -mesg "${prompt_header^}" -theme-str '@import "./common/themes/confirm.rasi"' -dmenu -selected-row 1)
+chosen=$(echo -en "${entries}" | ${ROFI} ${rofiargs} -mesg "${prompt_header^}" -theme-str '@import "./common/themes/confirm.rasi"' -dmenu -selected-row 1 -format i)
 
 case "$chosen" in
     "0") exit 0 ;;
