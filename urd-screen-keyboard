@@ -16,7 +16,8 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 # parse options
 handle_common_opts "$@"
 
-rofiargs="${rofiargs// -keep-filter} -keep-filter"
+source "./common/langs/${default_lang}"
+rofiargs="${rofiargs// -keep-filter -keep-selection} -keep-filter -keep-selection"
 header="${texts[header_screen-keyboard]:-Screen keyboard}"
 keys="./common/keyboards/QUERTY_en-US_40.keys"
 theme="./common/themes/horizontal_keyboard.rasi"
@@ -24,6 +25,43 @@ theme="./common/themes/horizontal_keyboard.rasi"
 entries="$(<${keys})"
 
 handle_rofi
+
+select_keyboard() {
+		local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
+		local -i i=0
+		local -a keyboards=()
+		IFS=$NF read -r -d "" -a keyboards <<< "$(${FIND} ./common/keyboards -type f -name "*.keys")"
+		entries=""
+		for i in "${keyboards[!#]}"; do
+			  enabled="$([[ "${keyboards[i]}" == "${current_keyboard}" ]] && echo "true" || echo "false")"
+		  	entries+="$(write_menuentry "${keyboards[i]//_/ }" "set keys=\"${keyboards[i]}\"" "${icons[keyboard]}" "${enabled}" "true")"
+		done
+		header="${texts[select]} ${texts[keyboards]}"
+		theme="./common/themes/vertical_menu.rasi"
+		handle_rofi
+		return $?
+}
+#export -f select_keyboard
+
+select_caps() {
+		local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
+		local -i i=0
+		local -a keyboards=()
+		IFS=$NF read -r -d "" -a keyboards <<< "$(${FIND} ./common/keyboards -type f -name "${current_keyboard}.*")"
+		for i in "${keyboards[!#]}"; do
+			  enabled="$([[ "${keyboards[i]}" == "${current_keyboard}" ]] && echo "true" || echo "false")"
+		  	entries+="$(write_menuentry "${keyboards[i]//_/ }" "set keys=\"${keyboards[i]}\"" "${icons[keyboard]}" "${enabled}" "true")"
+		done
+		header="${texts[select]} ${texts[keyboards]}"
+		theme="./common/themes/vertical_menu.rasi"
+		handle_rofi
+		return $?
+}
+
+type_string() {
+		echo "${@}" && send_notification "${texts[copied]^}: ${args}"
+}
+#export -f type_string
 
 #send_notification "After handle rofi. RETV=${ROFI_RETV}"
 if ${force_dmenu} ; then
@@ -34,11 +72,7 @@ if ${force_dmenu} ; then
 	  esac
 else
 		case ${ROFI_RETV} in
-				10) # set 
-						wtype "${args}" && send_notification "${texts[copied]^}: ${args}" || die
-				;;
 				0) # Restart after selection
-						keepselection=true
 						write_script_entries
 				;;
 		esac
