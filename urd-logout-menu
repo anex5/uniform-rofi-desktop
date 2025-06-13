@@ -15,7 +15,7 @@ usage="${texts[usage]}: ${prog} [$texts[options]]
 "
 # parse options
 handle_common_opts "$@"
-
+source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
 rofiargs+=" -dmenu"
 
 # All supported choices

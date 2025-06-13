@@ -14,7 +14,7 @@ usage="${texts[usage]}: ${prog} [$texts[options]]
 "
 # parse options
 handle_common_opts "$@"
-
+source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
 default_themestr+=" element-text { tab-stops: [8em, 13em]; }"
 
 # All supported choices

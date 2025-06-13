@@ -1,8 +1,6 @@
 @import "../themes/hotkeys.rasi"
 
 configuration {
-    modi: "drun,run,filebrowser";
-    drun-display-format: "{name}";
     hover-select: true;
     me-select-entry: "";
     //me-accept-entry: "";
@@ -21,17 +19,17 @@ listview {
     layout          : vertical;
     flow            : horizontal;
     padding         : 0.75em;
-	columns         : 10;
 	lines           : 4;
-	dynamic         : false;
+	columns         : 12;
+	dynamic         : true;
 	scrollbar       : false;
-    fixed-columns   : true;
+    fixed-columns   : false;
     fixed-height    : true;
 }
 
 mode-switcher {
-    spacing: 					10px;
-    background-color: 			darkgrey;    
+    spacing: 10px;
+    background-color: inherit;    
 }
 
 mainbox {

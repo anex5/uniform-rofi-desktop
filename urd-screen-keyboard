@@ -16,64 +16,66 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 # parse options
 handle_common_opts "$@"
 
-source "./common/langs/${default_lang}"
-rofiargs="${rofiargs// -keep-filter -keep-selection} -keep-filter -keep-selection"
+source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
+rofiargs="${rofiargs// -keep-selection} -keep-selection"
 header="${texts[header_screen-keyboard]:-Screen keyboard}"
-keys="./common/keyboards/QUERTY_en-US_40.keys"
+keys="./common/keyboards/QWERTY_en-US_48.keys"
 theme="./common/themes/horizontal_keyboard.rasi"
+
+select_keyboard() {
+	local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
+	local -i i=0
+	local -a keyboards=()
+	IFS=$NF read -r -d '' -a keyboards <<< "$(${FIND} common/keyboards -type f -name "*.keys")"
+	entries=""
+	for i in "${!keyboards[@]}"; do
+		# send_notification ${keyboards[i]}
+		enabled="$([[ "${keyboards[i]}" == "${current_keyboard}" ]] && echo "true" || echo "false")"
+		entries+="$(write_menuentry "${keyboards[i]##*/}" "export keys=\"${keyboards[i]}\"" "${icons[keyboard]}" "${enabled}" "true")"
+	done
+	header="${texts[select]} ${texts[keyboard]}"
+	theme="./common/themes/vertical_menu.rasi"
+	handle_rofi
+	return $?
+}
+
+toggle_caps() {
+	local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
+	local caps="$([[ "${current_keyboard}" =~ ".caps" ]] && echo "" || echo ".caps")"
+	export keys="${current_keyboard}${caps}"
+	return $?
+}
+
+type_key() {
+	local key="${1:-" "}"
+	export ROFI_DATA+="${key}"
+	wtype -k "${key// /space}"
+	rofiargs="${rofiargs// -keep-filter} -keep-filter"
+}
+
+type_string() {
+	echo -e "${ROFI_DATA}" 1>&2
+	rofiargs="${rofiargs// -keep-filter}"
+	ROFI_DATA=''
+	export ROFI_DATA
+	# send_notification "${texts[copied]^}: ${ROFI_DATA}"
+}
 
 entries="$(<${keys})"
 
 handle_rofi
 
-select_keyboard() {
-		local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
-		local -i i=0
-		local -a keyboards=()
-		IFS=$NF read -r -d "" -a keyboards <<< "$(${FIND} ./common/keyboards -type f -name "*.keys")"
-		entries=""
-		for i in "${keyboards[!#]}"; do
-			  enabled="$([[ "${keyboards[i]}" == "${current_keyboard}" ]] && echo "true" || echo "false")"
-		  	entries+="$(write_menuentry "${keyboards[i]//_/ }" "set keys=\"${keyboards[i]}\"" "${icons[keyboard]}" "${enabled}" "true")"
-		done
-		header="${texts[select]} ${texts[keyboards]}"
-		theme="./common/themes/vertical_menu.rasi"
-		handle_rofi
-		return $?
-}
-#export -f select_keyboard
-
-select_caps() {
-		local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
-		local -i i=0
-		local -a keyboards=()
-		IFS=$NF read -r -d "" -a keyboards <<< "$(${FIND} ./common/keyboards -type f -name "${current_keyboard}.*")"
-		for i in "${keyboards[!#]}"; do
-			  enabled="$([[ "${keyboards[i]}" == "${current_keyboard}" ]] && echo "true" || echo "false")"
-		  	entries+="$(write_menuentry "${keyboards[i]//_/ }" "set keys=\"${keyboards[i]}\"" "${icons[keyboard]}" "${enabled}" "true")"
-		done
-		header="${texts[select]} ${texts[keyboards]}"
-		theme="./common/themes/vertical_menu.rasi"
-		handle_rofi
-		return $?
-}
-
-type_string() {
-		echo "${@}" && send_notification "${texts[copied]^}: ${args}"
-}
-#export -f type_string
-
 #send_notification "After handle rofi. RETV=${ROFI_RETV}"
 if ${force_dmenu} ; then
-	  case ${ROFI_RETV} in
-				0) # Restart after selection
-						exec ./${prog} ${args// -arg *} -arg "-f ${chosen}"
-				;;
-	  esac
+	case ${ROFI_RETV} in
+		0) # Restart after selection
+			exec ./${prog} ${args// -arg *} -arg "-f ${chosen}"
+		;;
+	esac
 else
-		case ${ROFI_RETV} in
-				0) # Restart after selection
-						write_script_entries
-				;;
-		esac
+	case ${ROFI_RETV} in
+		0) # Restart after selection
+			write_script_entries
+		;;
+	esac
 fi
