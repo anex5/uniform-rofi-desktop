@@ -13,6 +13,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
     ${common_usage}
 "
 handle_common_opts "$@"
+source ./common/langs/${default_lang}
 rofiargs="${rofiargs//-use-hot-keys -format p} -use-hot-keys -format p"
 theme="./common/themes/month.rasi"
 
@@ -39,7 +40,7 @@ handle_date() {
 				"${texts[cant]} ${texts[copy]} ${date}" \
 		)"
 		entries+="$(write_menuentry "${texts[set]^}" \
-        "cron ${date}" \
+        "date -s ${date}" \
         "${icons[reminder]}" "false" "true" "false" "false" \
         "${texts[cantset]} ${texts[reminder]} ${date}" \
     )"

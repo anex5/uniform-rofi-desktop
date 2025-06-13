@@ -148,7 +148,7 @@ write_script_entries() {
     [[ -n "${delim}" ]] && echo -e "\x00delim\x1f${delim}"
     [[ -n "${prompt}" ]] && echo -e "\x00prompt\x1f<span $SPANATTRS>${prompt^}</span>"
     [[ -n "${header}" ]] && echo -e "\x00message\x1f<span $SPANATTRS>${header^}</span>"
-    [[ -n "${ROFI_DATA}" ]] && echo -e "\x00data\x1f${ROFI_DATA}"
+    echo -e "\x00data\x1f${ROFI_DATA}"
     echo -en "${entries}"
 }
 
