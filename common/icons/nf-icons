@@ -139,22 +139,26 @@ icons[image_format]=$(write_span "&#xf0e2d;")
 icons[image_depth]=$(write_span "&#xf03b9;")
 icons[image_position]=$(write_span "&#xf0c8e;")
 
+icons["****"]=$(write_span "&#xf0928;")
+icons["*** "]=$(write_span "&#xf0925;")
+icons["**  "]=$(write_span "&#xf0922;")
+icons["*   "]=$(write_span "&#xf091f;")
+icons["    "]=$(write_span "&#xf092f;")
+icons["l****"]=$(write_span "&#xf092a;")
+icons["l*** "]=$(write_span "&#xf0927;")
+icons["l**  "]=$(write_span "&#xf0924;")
+icons["l*   "]=$(write_span "&#xf0921;")
+icons["l    "]=$(write_span "&#xf092c;")
+icons["o****"]=$(write_span "&#xf16ce;")
+icons["o*** "]=$(write_span "&#xf16cd;")
+icons["o**  "]=$(write_span "&#xf16cc;")
+icons["o*   "]=$(write_span "&#xf16cb;")
+icons["o    "]=$(write_span "&#xf16cf;")
 
-icons["▂▄▆█"]=$(write_span "&#xf0928;")  # 󰤨
-icons["****"]=$(write_span "&#xf0928;")  # 󰤨
-icons["▂▄▆_"]=$(write_span "&#xf0925;")  # 󰤥
-icons["*** "]=$(write_span "&#xf0925;")  # 󰤥
-icons["▂▄__"]=$(write_span "&#xf0922;")  # 󰤢
-icons["**  "]=$(write_span "&#xf0922;")  # 󰤢
-icons["▂___"]=$(write_span "&#xf091f;")  # 󰤟
-icons["*   "]=$(write_span "&#xf091f;")  # 󰤟
-icons["____"]=$(write_span "&#xf092f;")  # 󰤯
-icons["    "]=$(write_span "&#xf092f;")  # 󰤯
-
-icons["wifi2"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0ca6;</span></span>  "
-icons["wifi5"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0ca8;</span></span>  "
-icons["wifi6"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0caa;</span></span>  "
-icons["wifi7"]="<span letter_spacing='-6000'>\Uf060a<span rise='3pt' font='${icon_font}'>&#xf0cac;</span></span>  "
+icons["wifi2"]="<span letter_spacing='-6000'>&#xf060a;<span rise='3pt' font='${icon_font}'>&#xf0ca6;</span> </span>"
+icons["wifi5"]="<span letter_spacing='-6000'>&#xf060a;<span rise='3pt' font='${icon_font}'>&#xf0ca8;</span> </span>"
+icons["wifi6"]="<span letter_spacing='-6000'>&#xf060a;<span rise='3pt' font='${icon_font}'>&#xf0caa;</span> </span>"
+icons["wifi7"]="<span letter_spacing='-6000'>&#xf060a;<span rise='3pt' font='${icon_font}'>&#xf0cac;</span> </span>"
 
 icons[wifi]="${icons[WiFi]}"
 icons[ethernet]=$(write_span "&#xf0200;")
