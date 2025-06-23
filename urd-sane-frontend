@@ -14,33 +14,29 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 
 handle_common_opts "$@"
 source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
-rofiargs="${default_rofiargs} -no-custom -format i "
+rofiargs="${rofiargs// -dmenu} -dmenu"
 #default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
-header="${texts[header_sane_frontend]:-Availiable image scanners}"
+header="${texts[header_sane_frontend]}"
 theme="./common/themes/vertical_menu.rasi"
 
 SCANIMAGE="/usr/bin/scanimage"
-output_file_name="/tmp/scan"
-curr_img_format=2
-curr_img_mode=0
-curr_img_depth=0
-curr_img_resolution=4
-curr_img_position="-l 0 -t 0 -x 216.7 -y 300"
+output_path="/tmp"
+output_file_name="urd-sane-scan"
 
 image_mode_menu() {
     local device_name="${devices[${1}]%%|*}"
     local device_path="${devices[${1}]##*|}"
-    curr_img_mode="${2}"
-    entries=""; actions=(); error_msgs=(); confirm=();
+    entries="";
 
     for i in "${!img_modes[@]}"; do
         enabled=$([[ "${curr_img_mode}" == "${img_modes[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_modes[i]}]:-${img_modes[i]}}" "${icons[${enabled}]}")"
-        actions+=( "${SCANIMAGE} -n --mode=${img_modes[i]} -d ${device_path}" );
-        #; let curr_img_mode=${img_modes[i]}" )
-        error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_mode]}")
+        entries+="$(write_menuentry "${texts[${img_modes[i]}]}" \
+            "set_image_mode ${1} ${img_modes[i]}" \
+            "${icons[image_mode]}" "${enabled}" "true" "false" "false" \
+            "${texts[cantset]^} ${texts[scanner]} ${texts[image_mode]}" \
+        )"
     done
-    header="${texts[header_sane_image_modes]:-"Availiable image modes"}"
+    header="${texts[header_sane_image_modes]^}"
     theme="./common/themes/vertical_menu.rasi"
 
     handle_rofi
@@ -50,18 +46,17 @@ image_mode_menu() {
 image_format_menu() {
     local device_name="${devices[${1}]%%|*}"
     local device_path="${devices[${1}]##*|}"
-    curr_img_format="${2}"
 
-    entries=""; actions=(); error_msgs=(); confirm=();
-
+    entries="";
     for i in "${!img_formats[@]}"; do
         enabled=$([[ "${curr_img_format}" == "${img_formats[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_formats[i]}]:-${img_formats[i]}}" "${enabled}" "${icons[image_format]}" "true")"}
-        actions+=( "${SCANIMAGE} -n --mode=${img_formats[i]} -d ${device_path}" )
-        #;"let curr_img_format=${img_formats[i]}" )
-        error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_format]}")
+        entries+="$(write_menuentry "${texts[${img_formats[i]}]}" \
+            "set_image_format ${1} ${img_formats[i]}" \
+            "${icons[image_format]}" "${enabled}" "true" "false" "false" \
+            "${texts[cantset]^} ${texts[scanner]} ${texts[image_format]}" \
+        )"
     done
-    header="${texts[header_sane_image_formats]:-"Availiable image formats"}"
+    header="${texts[header_sane_image_formats]^}"
     theme="./common/themes/vertical_menu.rasi"
 
     handle_rofi
@@ -71,17 +66,17 @@ image_format_menu() {
 image_resolution_menu() {
     local device_name="${devices[${1}]%%|*}"
     local device_path="${devices[${1}]##*|}"
-    curr_img_resolution="${2}"
-
-    entries=""; actions=(); error_msgs=(); confirm=(); active=""; urgent="";
+    entries="";
 
     for i in "${!img_resolutions[@]}"; do
         enabled=$([[ "${curr_img_resolution}" == "${img_resolutions[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_resolutions[i]}]:-${img_resolutions[i]}}" "${enabled}" "${icons[image_resolution]}" "true")"
-        actions+=( "let curr_img_resolution=${img_resolutions[i]};" )
-        error_msgs+=("${texts[cantset]} ${texts[scanner]} ${texts[image_format]}")
+        entries+="$(write_menuentry "${texts[${img_resolutions[i]}]}" \
+            "set_image_resolution ${1} ${img_resolutions[i]}" \
+            "${icons[image_resolution]}" "${enabled}" "true" "false" "false" \
+            "${texts[cantset]^} ${texts[scanner]} ${texts[image_format]}" \
+        )"
     done
-    header="${texts[header_sane_image_resolutions]:-"Availiable image resolutions"}"
+    header="${texts[header_sane_image_resolutions]^}"
     theme="./common/themes/vertical_menu.rasi"
 
     handle_rofi
@@ -89,52 +84,41 @@ image_resolution_menu() {
 }
 
 image_depth_menu() {
-    curr_img_depth="${2}"
-    local device_name="${devices[${1}]%%|*}"
-    local device_path="${devices[${1}]##*|}"
-    entries=""; actions=(); error_msgs=(); confirm=();
-
-    for i in "${!img_depths[@]}"; do
-        enabled=$([[ "${curr_img_depth}" == "${img_depths[i]}" ]] && echo true || echo false )
-        entries+="$(write_menuentry "${texts[${img_depths[i]}]:-${img_depths[i]}}" "${enabled}" "${icons[image_depth]}" "true")"
-        actions+=( "let curr_img_depth=${img_depths[i]}" )
-        error_msgs+=("${texts[cant]} ${texts[scanner]} ${texts[image_format]}")
-    done
-    header="${texts[header_sane_image_depths]:-"Availiable image depths"}"
-    theme="./common/themes/vertical_menu.rasi"
-
-    handle_rofi
-    return $?
-}
-
-image_location_menu() {
-    curr_img_location="${2}"
-    local device_name="${devices[${1}]%%|*}"
-    local device_path="${devices[${1}]##*|}"
-    entries=""; actions=(); error_msgs=(); confirm=();
-
-    #enabled=$([[ "${curr_img_depth}" == "${img_depths[i]}" ]] && echo true || echo false )
-    #entries+="$(write_menuentry "${texts[${img_location}]:-"Image location"} "${icons[file]}")"
-    #actions+=( " " )
-    #error_msgs+=("${texts[cant]} ${texts[scanner]} ${texts[image_format]}")
-    
-    header="${texts[header_sane_image_locations]:-"Output image file folder"}"
-    theme="./common/themes/vertical_menu.rasi"
-
-    handle_rofi
-    return $?
-}
-
-image_position_menu() {
-    local curr_img_location="${2}"
     local device_name="${devices[${1}]%%|*}"
     local device_path="${devices[${1}]##*|}"
     entries="";
 
-    header="${texts[header_sane_image_locations]:-"Output image file folder"}"
+    for i in "${!img_depths[@]}"; do
+        enabled=$([[ "${curr_img_depth}" == "${img_depths[i]}" ]] && echo true || echo false )
+        entries+="$(write_menuentry "${texts[${img_depths[i]}]}" \
+            "set_img_depth ${1} ${img_depths[i]}" \
+            "${icons[image_depth]}" "${enabled}" "true" "false" "false" \
+            "${texts[cantset]^} ${texts[scanner]} ${texts[image_format]}" \
+        )"
+    done
+    header="${texts[header_sane_image_depths]^}"
     theme="./common/themes/vertical_menu.rasi"
 
     handle_rofi
+    return $?
+}
+
+image_path_menu() {
+    curr_img_location="${2}"
+    local device_name="${devices[${1}]%%|*}"
+    local device_path="${devices[${1}]##*|}"
+    entries="";
+    
+    f="$(${ROFI} ${rofiargs// -dmenu} -show filebrowser -theme-str "@import \"./common/themes/vertical_menu.rasi\"" \
+        -filebrowser-directories-first true \
+        -filebrowser-directory "${output_path#~/$HOME}" \
+        -filebrowser-filter-regex "^.*$" \
+        -filebrowser-command "echo -en " \
+        -filebrowser-fallback-icon "image-x-generic" \
+    )"
+    output_path="${f}"
+    #send_notification "${output_path}"
+
     return $?
 }
 
@@ -143,82 +127,82 @@ settings_menu() {
     local device_path="${devices[${1}]##*|}"
     entries=""
 
-    entries+="$(write_menuentry "${texts[image_mode]}: ${texts[${img_modes[curr_img_mode]}]}" \
+    entries+="$(write_menuentry "${texts[image_mode]^}: ${texts[${img_modes[curr_img_mode]}]}" \
         "image_mode_menu ${1} ${img_modes[curr_img_mode]}" \
-        "${icons[image_mode]}" "true" "true" "false" "false" \
-        "${texts[cantset]} ${texts[scanner]} ${texts[image_mode]:-"Image mode"}" \
+        "${icons[image_mode]}" "${saved}" "true" "false" "false" \
+        "${texts[cantset]^} ${texts[scanner]} ${texts[image_mode]^}" \
     )"
 
-    entries+="$(write_menuentry "${texts[image_format]}: ${texts[${img_formats[curr_img_format]}]}" \
+    entries+="$(write_menuentry "${texts[image_format]^}: ${img_formats[curr_img_format]}" \
         "image_format_menu ${1} ${img_formats[curr_img_format]}" \
-        "${icons[image_format]}" "true" "true" "false" "false" \
-        "${texts[cantset]} ${texts[scanner]} ${texts[image_format]:-"Image format"}" \
+        "${icons[image_format]}" "${saved}" "true" "false" "false" \
+        "${texts[cantset]^} ${texts[scanner]} ${texts[image_format]^}" \
     )"
 
-    entries+="$(write_menuentry "${texts[image_resolution]}: ${texts[${img_resolutions[curr_img_resolution]}]} ${texts[ppi]}" \
+    entries+="$(write_menuentry "${texts[image_resolution]^}: ${img_resolutions[curr_img_resolution]} ${texts[ppi]}" \
         "image_resolution_menu ${1} ${img_resolutions[curr_img_resolution]}" \
-        "${icons[image_resolution]}" "false" "true" "false" "false" \
-        "${texts[cantset]} ${texts[scanner]} ${texts[image_resolution]}" \
+        "${icons[image_resolution]}" "${saved}" "true" "false" "false" \
+        "${texts[cantset]^} ${texts[scanner]} ${texts[image_resolution]}" \
     )"
 
-    entries+="$(write_menuentry "${texts[image_depth]}: ${texts[${img_depths[curr_img_depth]}]} ${texts[bits]}" \
+    entries+="$(write_menuentry "${texts[image_depth]^}: ${img_depths[curr_img_depth]} ${texts[bits]}" \
         "image_depth_menu ${1} ${img_depths[curr_img_depth]}" \
-        "${icons[image_depth]}" "false" "true" "false" "false" \
-        "${texts[cantset]} ${texts[scanner]} ${texts[image_depth]}" \
+        "${icons[image_depth]}" "${saved}" "true" "false" "false" \
+        "${texts[cantset]^} ${texts[scanner]} ${texts[image_depth]}" \
     )"
 
-    entries+="$(write_menuentry "${texts[image_position]}: ${texts[curr_img_position]} ${texts[mm]}" \
+    entries+="$(write_menuentry "${texts[image_position]^}: ${curr_img_position} ${texts[mm]}" \
         "image_position_menu ${1} ${curr_img_position}" \
-        "${icons[image_position]}" "false" "true" "false" "false" \
-        "${texts[cantset]} ${texts[scanner]} ${texts[image_position]}" \
+        "${icons[image_position]}" "${saved}" "true" "false" "false" \
+        "${texts[cantset]^} ${texts[scanner]} ${texts[image_position]}" \
     )"
 
-    header="${texts[availiable]:-"Availiable"} ${texts[options]:-"options"} ${device_name}"
+    entries+="$(write_menuentry "${texts[image_path]^}: ${output_file_name%\/*}" \
+        "image_path_menu ${1} ${output_file_name}" \
+        "${icons[image_folder]}" "${saved}" "true" "false" "false" \
+        "${texts[cantset]^} ${texts[scanner]} ${texts[image_path]}" \
+    )"
+
+    header="${texts[availiable]^} ${texts[options]} ${device_name}"
     theme="./common/themes/vertical_menu.rasi"
     
     handle_rofi
     return $?
 }
 
-declare -a img_modes img_resolutions img_depths img_formats
+declare -a availiable_options img_modes img_resolutions img_depths img_formats
 img_modes=("color" "gray")
 img_resolutions=("4800" "2400" "1200" "600" "300" "150" "100" "75")
 img_depths=("8" "16")
 img_formats=("pnm" "tiff" "png" "jpeg" "pdf")
 
-devices="$(${SCANIMAGE} --formatted-device-list="%v %m|%d")"
+curr_img_format=2
+curr_img_mode=0
+curr_img_depth=0
+curr_img_resolution=4
+curr_img_position="-l 0 -t 0 -x 216.7 -y 300"
+curr_img_preview="yes"
+
+IFS=$NF read -r -d '' -a devices <<< "$(${SCANIMAGE} --formatted-device-list="%v %m|%d")"
 
 [[ ${#devices[@]} -eq 0 ]] && die 1 "${texts[noscanners]:-"No scanners found"}"
-device_options="--format=${img_formats[curr_img_format]} --output-file=${output_file_name}\.${img_formats[curr_img_format]} \
---resolution=${img_resolutions[curr_img_resolution]} --depth=${img_depths[curr_img_depth]} --mode=${img_mode[curr_img_mode]} ${curr_img_position}"
 
 for i in "${!devices[@]}"; do
     device_name="${devices[i]%%|*}"
     device_path="${devices[i]##*|}"
-
-    entries+="$(write_menuentry "${device_name}" "settings_menu ${i}" \
-        "${icons[USB]}" "${ready}" "true" \
-    )"
-    test -f ${output_file_name}\.${img_formats[curr_img_format]} && scanned="true" || scanned="false"
-    [[ "$(${SCANIMAGE} --formatted-device-list="%d")" == "${device_path}" ]] && availiable="true" || availiable="false"
+    availiable_options[i]="$(${SCANIMAGE} -L --device-name=${device_path})"
     
-    entries+="$(write_menuentry "<span>${branch[0]}</span>${texts[scan]:-"Scan"}" \
-        "${SCANIMAGE} ${device_options} --device-name=${device_path}" \
-        "${icons[scan]}" "${availiable}" "true" "false" "false" \
-        "${texts[cant]} ${texts[scan]}" \
+    device_options="--format=${img_formats[curr_img_format]} --output-file="${output_file_name}.${img_formats[curr_img_format]}" --preview=${curr_img_preview} \
+    --resolution=${img_resolutions[curr_img_resolution]} --depth=${img_depths[curr_img_depth]} --mode=${img_modes[curr_img_mode]^} ${curr_img_position}"
+    entries+="$(write_menuentry "${device_name}" "settings_menu ${i} ${availiable_options}" \
+        "${icons[USB]}" "${availiable}" "true" \
     )"
-        
-    entries+="$(write_menuentry "<span>${branch[0]}</span>${texts[preview]:-"Prewiew"}" \
-        "${SCANIMAGE} ${device_options} --device-name=${device_path} --preview=yes" \
-        "${availiable}" "${icons[preview]}" "true" "false" "false" \
-        "${texts[cant]:-"Can't"} ${texts[scan]:-"scan"} ${texts[prewiew]:-"preview"}" \
-    )"
+    test -f "${output_file_name}.${img_formats[curr_img_format]}" && scanned="true" || scanned="false"
 
-    entries+="$(write_menuentry "<span>${branch[1]}</span>${texts[pick]:-"Pick"} \
-        ${texts[image_position]:-"image position and size"}" \
-        "pick_img_position_and_size ${i}" \
-        "${icons[dimension]}" "${scanned}" "true" "false" "false" \
-        "${texts[cant]:-"Can't"} ${texts[pick]:-"pick"} ${texts[image_position]:-"Image position and size"}"
+    entries+="$(write_menuentry "<span>${branch[1]}</span>${texts[scan]^}" \
+        "catch_posix retcode error_msg ${SCANIMAGE} ${device_options} --device-name=${device_path}" \
+        "${icons[scan]}" "${scanned}" "true" "false" "false" \
+        "${texts[cant]^} ${texts[scan]}" \
     )"
 done
 

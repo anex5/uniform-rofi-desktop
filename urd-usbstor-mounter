@@ -39,7 +39,7 @@ unmount_all() {
         catch_posix retcode error_msg ${UDISKSCTL} unmount --no-user-interaction -b ${part}
     done
     catch_posix retcode error_msg ${UDISKSCTL} power-off --no-user-interaction -b ${device} \
-        && send_notification "${texts[usbpoweroff]}" || send_notification "${texts[cantusbpoweroff]}"
+        && send_notification "${texts[usbpoweroff]} ${device}" || send_notification "${texts[cantusbpoweroff]} ${device}"
 }
 
 declare -a devices

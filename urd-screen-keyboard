@@ -56,8 +56,7 @@ type_key() {
 type_string() {
 	echo -e "${ROFI_DATA}" 1>&2
 	rofiargs="${rofiargs// -keep-filter}"
-	ROFI_DATA=''
-	export ROFI_DATA
+	export ROFI_DATA=''
 	# send_notification "${texts[copied]^}: ${ROFI_DATA}"
 }
 

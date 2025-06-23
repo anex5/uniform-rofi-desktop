@@ -12,6 +12,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
     ${texts[usage_${nprog##*urd_}]^}
     ${common_usage}
 "
+rofiargs="${rofiargs// -dmenu} -dmenu"
 # parse options
 handle_common_opts "$@"
 source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
@@ -33,7 +34,7 @@ for i in "${!devices[@]}"; do
     name="$(${SED} -n "s/^[* ]\+[0-9]\+\. \([^\[]\+\).*$/\1/p" <<< ${str})"
     device="$(${WPCTL} inspect ${ids} | ${SED} -n 's/^ \+api\.alsa\.pcm\.id = \"\([A-Z]\+\).*\"/\1/p')"
     entries+="$(write_menuentry "${icons[vol${volume// }]} ${name}" \
-        "${act[${enabled}]} ${ids} ${enabled}" \
+        "catch_posix retcode error_msg ${act[${enabled}]} ${ids} ${enabled}" \
         "${icons[${device}]}" "${bool[${enabled}]}" "false" "false" "false" \
         "${texts[cant]:-"Can't"} ${texts[set]:-"set"} ${texts[audiosink]:-"audio sink"}" \
     )"
