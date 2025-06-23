@@ -140,20 +140,35 @@ icons[image_depth]=$(write_span "&#xf03b9;")
 icons[image_position]=$(write_span "&#xf0c8e;")
 
 icons["****"]=$(write_span "&#xf0928;")
+icons["▂▄▆█"]=${icons["****"]}
 icons["*** "]=$(write_span "&#xf0925;")
+icons["▂▄▆_"]=${icons["*** "]}
 icons["**  "]=$(write_span "&#xf0922;")
+icons["▂▄__"]=${icons["**  "]}
 icons["*   "]=$(write_span "&#xf091f;")
+icons["▂___"]=${icons["*   "]}
 icons["    "]=$(write_span "&#xf092f;")
+icons["____"]=${icons["    "]}
 icons["l****"]=$(write_span "&#xf092a;")
+icons["l▂▄▆█"]=${icons["l****"]}
 icons["l*** "]=$(write_span "&#xf0927;")
+icons["l▂▄▆_"]=${icons["l*** "]}
 icons["l**  "]=$(write_span "&#xf0924;")
+icons["l▂▄__"]=${icons["l**  "]}
 icons["l*   "]=$(write_span "&#xf0921;")
+icons["l▂___"]=${icons["l*   "]}
 icons["l    "]=$(write_span "&#xf092c;")
+icons["l____"]=${icons["l    "]}
 icons["o****"]=$(write_span "&#xf16ce;")
+icons["o▂▄▆█"]=${icons["o****"]}
 icons["o*** "]=$(write_span "&#xf16cd;")
+icons["o▂▄▆_"]=${icons["o*** "]}
 icons["o**  "]=$(write_span "&#xf16cc;")
+icons["o▂▄__"]=${icons["o**  "]}
 icons["o*   "]=$(write_span "&#xf16cb;")
+icons["o▂___"]=${icons["o*   "]}
 icons["o    "]=$(write_span "&#xf16cf;")
+icons["o____"]=${icons["o    "]}
 
 icons["wifi2"]="<span letter_spacing='-6000'>&#xf060a;<span rise='3pt' font='${icon_font}'>&#xf0ca6;</span> </span>"
 icons["wifi5"]="<span letter_spacing='-6000'>&#xf060a;<span rise='3pt' font='${icon_font}'>&#xf0ca8;</span> </span>"

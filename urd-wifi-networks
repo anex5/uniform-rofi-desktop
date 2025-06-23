@@ -20,7 +20,8 @@ theme="./common/themes/vertical_menu.rasi"
 
 FIELDS="NAME,SSID,MODE,CHAN,FREQ,RATE,SIGNAL,BARS,SECURITY,WPA-FLAGS,RSN-FLAGS,IN-USE,BSSID"
 TIMEOUT=1
-NMCLI="nmcli -w ${TIMEOUT} -c no -e no -t"
+export TERM=""
+NMCLI="nmcli -w ${TIMEOUT} -c no -e no -t -m tabular"
 
 declare -A act
 act[connect]="wifi_connect"
@@ -36,16 +37,17 @@ parse_entry(){
     #quality="$(${SED} -n 's/^.*Quality=\([0-9]\+\)\/.*/\1/p' <<< "${entry}")"
     #security="$(${SED} -n 's/^.*\(WPA[0-9]*\).*/\1/p' <<< "${entry}")"
 
-    #local s=""
-    #[[ " ${savedcons[*]} " =~ " ${ssid} " ]] && s="o" || s="l"
-    #[[ "${security}" == "" ]] && s=""
     #bars="$s    "
     #test ${quality} -gt 12 && bars="$s*   "
     #test ${quality} -gt 37 && bars="$s**  "
     #test ${quality} -gt 62 && bars="$s*** "
     #test ${quality} -gt 87 && bars="$s****"
     IFS=':' read -r -d '' name ssid mode chan freq rate signal bars security wpa_flags rsn_flags in_use bssid <<< "${entry}"
+    local s=""
+    [[ " ${savedcons[*]} " =~ " ${ssid} " ]] && s="o" || s="l"
+    [[ "${security}" == "" ]] && s=""
     bssid="${bssid%*$NF}"
+    bars="${s}${bars}"
     return $?
 }
 
