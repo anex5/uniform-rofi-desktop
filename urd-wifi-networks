@@ -14,12 +14,12 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 # parse options
 handle_common_opts "$@"
 rofiargs+="${rofiargs// -dmenu} -dmenu"
-default_themestr+="element-text { tab-stops: [12em, 13em]; } "
+default_themestr+="element-text { tab-stops: [10em, 13em]; } "
 header="${texts[header_wifi_networks]}"
 theme="./common/themes/vertical_menu.rasi"
 
 FIELDS="NAME,SSID,MODE,CHAN,FREQ,RATE,SIGNAL,BARS,SECURITY,WPA-FLAGS,RSN-FLAGS,IN-USE,BSSID"
-TIMEOUT=5
+TIMEOUT=1
 NMCLI="nmcli -w ${TIMEOUT} -c no -e no -t"
 
 declare -A act
@@ -28,23 +28,24 @@ act[disconnect]="wifi_disconnect"
 
 parse_entry(){
     local entry="${@?${texts[missingarg]:-Missing argument} entry}"
-    bssid="$(${SED} -n 's/^.*Address: \([[:xdigit:]:]\{11,17\}\).*/\1/p' <<< "${entry}")"
-    ssid="$(${SED} -n 's/^.*ESSID:"\(.*\)".*/\1/p' <<< "${entry}")"
-    freq="$(${SED} -n 's/^.*Frequency:\([0-9.]\+\) .*/\1/p' <<< "${entry}")"
-    rate="$(${SED} -n 's/^.*Bit Rates:\([0-9]\+\) .*/\1/p' <<< "${entry}")"
-    signal="$(${SED} -n 's/^.*Signal level=\([0-9]\+\)\/.*/\1/p' <<< "${entry}")"
-    quality="$(${SED} -n 's/^.*Quality=\([0-9]\+\)\/.*/\1/p' <<< "${entry}")"
-    security="$(${SED} -n 's/^.*\(WPA[0-9]*\).*/\1/p' <<< "${entry}")"
+    #bssid="$(${SED} -n 's/^.*Address: \([[:xdigit:]:]\{11,17\}\).*/\1/p' <<< "${entry}")"
+    #ssid="$(${SED} -n 's/^.*ESSID:"\(.*\)".*/\1/p' <<< "${entry}")"
+    #freq="$(${SED} -n 's/^.*Frequency:\([0-9.]\+\) .*/\1/p' <<< "${entry}")"
+    #rate="$(${SED} -n 's/^.*Bit Rates:\([0-9]\+\) .*/\1/p' <<< "${entry}")"
+    #signal="$(${SED} -n 's/^.*Signal level=\([0-9]\+\)\/.*/\1/p' <<< "${entry}")"
+    #quality="$(${SED} -n 's/^.*Quality=\([0-9]\+\)\/.*/\1/p' <<< "${entry}")"
+    #security="$(${SED} -n 's/^.*\(WPA[0-9]*\).*/\1/p' <<< "${entry}")"
 
-    local s=""
-    [[ " ${savedcons[*]} " =~ " ${ssid} " ]] && s="o" || s="l"
-    [[ "${security}" == "" ]] && s=""
-    bars="$s    "
-    test ${quality} -gt 12 && bars="$s*   "
-    test ${quality} -gt 37 && bars="$s**  "
-    test ${quality} -gt 62 && bars="$s*** "
-    test ${quality} -gt 87 && bars="$s****"
-
+    #local s=""
+    #[[ " ${savedcons[*]} " =~ " ${ssid} " ]] && s="o" || s="l"
+    #[[ "${security}" == "" ]] && s=""
+    #bars="$s    "
+    #test ${quality} -gt 12 && bars="$s*   "
+    #test ${quality} -gt 37 && bars="$s**  "
+    #test ${quality} -gt 62 && bars="$s*** "
+    #test ${quality} -gt 87 && bars="$s****"
+    IFS=':' read -r -d '' name ssid mode chan freq rate signal bars security wpa_flags rsn_flags in_use bssid <<< "${entry}"
+    bssid="${bssid%*$NF}"
     return $?
 }
 
@@ -99,25 +100,26 @@ IFS=$NF read -r -d '' -a savedcons <<< "$(${NMCLI} -f NAME,TYPE con | ${SED} -n 
 [[ ${#wlan[@]} -eq 0 ]] && die -1 "${texts[nowifidevice]}"
 
 for i in ${!wlan[@]}; do
-    curr_bssid=$(iw dev ${wlan[i]} scan dump -u | ${SED} -n 's/^BSS \([[:xdigit:]:]\{11,17\}\).* -- associated/\1/p' )
-    iwlist_output="$(iwlist ${wlan[i]} scanning | ${SED} -nz 's/\n /|/g;s/[[:space:]]\+/ /g;s/wlp.\+ Scan completed ://;s/| Cell [0-9]\+ - /\n| /gp')"
-    bss_list=(); IFS=$NF read -r -d '' -a bss_list <<< "${iwlist_output}"
+    #curr_bssid=$(iw dev ${wlan[i]} scan dump -u | ${SED} -n 's/^BSS \([[:xdigit:]:]\{11,17\}\).* -- associated/\1/p' )
+    #iwlist_output="$(iwlist ${wlan[i]} scanning | ${SED} -nz 's/\n /|/g;s/[[:space:]]\+/ /g;s/wlp.\+ Scan completed ://;s/| Cell [0-9]\+ - /\n| /gp')"
+    nmcli_bss_list="$(${NMCLI} -f ${FIELDS} device wifi list ifname ${wlan[i]} --rescan auto)"
+    bss_list=(); IFS=$NF read -r -d '' -a bss_list <<< "${nmcli_bss_list}"
     devname="$(${SED} -n 's/^\(.\+\):v\([0-9A-Z]\+\)[a-z]\([0-9A-Z]\+\)[a-z].*$/get_device_name "\U\1" \"\L\2\" \"\L\3\" \"\/usr\/share\/hwdata\/\1.ids\"\n/ep' /sys/class/net/${wlan[i]}/device/modalias )"
     busname="${devname%% *}"
     devname="${texts[${busname}]} ${devname#* }"
-    up="$([[ -n "${curr_bssid}" ]] && echo true || echo false)"
+    up="$(is_wlan_up ${wlan[i]} && echo true || echo false)"
     entries+="$(write_menuentry "${devname}" "toggle_wlan ${wlan[i]}" "${icons[${busname}]}" \
         "${up}" "true" "false" "false" "${texts[cant]} ${texts[togglewlan]}" \
     )"
     for j in "${!bss_list[@]}"; do
         parse_entry "${bss_list[j]}"
         #warn "$bssid ${curr_bssid^} $ssid $freq $rate $signal $quality $bars $security"
-        #bssid="${bssid%*$NF}"
-        connected="$([[ "${curr_bssid^^}" == "${bssid}" ]] && echo disconnect || echo connect)"
+        connected="$([[ "${in_use}" == "*" ]] && echo disconnect || echo connect )"
+        #connected="$([[ "${curr_bssid^^}" == "${bssid}" ]] && echo disconnect || echo connect)"
         cname="${ssid:-"${bssid}"}"
         saved="$([[ " ${savedcons[*]} " =~ " ${cname} " ]] && echo -e "${icons[confirmed]}" )"
         entries+="$(write_menuentry "$(get_branch_icon "${#bss_list[@]}" "${j}") ${cname} ${saved} \
-\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${rate} ${texts[MBps]}</span></tt>" \
+\t<tt>${icons[wifi${freq:0:1}]}<span variant='all-small-caps' rise='1pt'>${rate}</span></tt>" \
             "${act[$connected]} ${ssid} ${bssid} ${security}" \
             "${icons[${bars}]}" "${bool[${connected}]}" "false" "false" "false" \
             "${texts[cant${connected}]}" \
