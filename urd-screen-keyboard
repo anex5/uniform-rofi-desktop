@@ -31,10 +31,11 @@ select_keyboard() {
 	for i in "${!keyboards[@]}"; do
 		# send_notification ${keyboards[i]}
 		enabled="$([[ "${keyboards[i]}" == "${current_keyboard}" ]] && echo "true" || echo "false")"
-		entries+="$(write_menuentry "${keyboards[i]##*/}" "export keys=\"${keyboards[i]}\"" "${icons[keyboard]}" "${enabled}" "true")"
+		entries+="$(write_menuentry "${keyboards[i]##*/}" "set_keyboard ${keyboards[i]}" "${icons[keyboard]}" "${enabled}")"
 	done
 	header="${texts[select]} ${texts[keyboard]}"
 	theme="./common/themes/vertical_menu.rasi"
+	#rofiargs="${rofiargs// -keep-filter} -keep-filter"
 	handle_rofi
 	return $?
 }
@@ -42,27 +43,38 @@ select_keyboard() {
 toggle_caps() {
 	local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
 	local caps="$([[ "${current_keyboard}" =~ ".caps" ]] && echo "" || echo ".caps")"
-	export keys="${current_keyboard}${caps}"
+	set_keyboard "./common/keyboards/${current_keyboard}${caps}"
+	rofiargs="${rofiargs// -keep-filter} -keep-filter"
 	return $?
 }
 
 type_key() {
-	local key="${1:-" "}"
-	export ROFI_DATA+="${key}"
-	wtype -k "${key// /space}"
+	local key="-k ${1?${texts[missingarg]:-Missing argument} key}"
+	[[ -n "${2}" ]] && local mod="-M ${2} " || local mod=""
+	local s=$(wtype ${mod}${key})
+	local wtype_ret=$?
+	export ROFI_DATA+="${s}"
 	rofiargs="${rofiargs// -keep-filter} -keep-filter"
+	return $wtype_ret
 }
 
 type_string() {
-	echo -e "${ROFI_DATA}" 1>&2
+	echo -e "${ROFI_DATA}" 1>&3
 	rofiargs="${rofiargs// -keep-filter}"
 	export ROFI_DATA=''
 	# send_notification "${texts[copied]^}: ${ROFI_DATA}"
 }
 
-entries="$(<${keys})"
+set_keyboard() {
+	local keyboard="${1?${texts[missingarg]:-Missing argument} keyboard}"
+	keys="${keyboard}"
+	entries="$(<${keyboard})"
+	rofiargs="${rofiargs// -keep-filter} -keep-filter"
+	handle_rofi
+	return $?
+}
 
-handle_rofi
+set_keyboard "${keys}"
 
 #send_notification "After handle rofi. RETV=${ROFI_RETV}"
 if ${force_dmenu} ; then

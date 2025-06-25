@@ -303,7 +303,7 @@ run_menuentry_action() {
     fi
     
     #catch_posix "retcode" "error_msg" "${action}"
-    ${action} 1>/dev/null
+    ${action} &>/dev/null
     retcode=${retcode:-$?}
     if [ ${retcode} -ne 0 -a -n "${error_msg}" ]; then
         send_notification "${error_msg}. ${texts[error]^}: ${retcode}"
