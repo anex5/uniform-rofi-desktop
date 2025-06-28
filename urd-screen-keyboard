@@ -17,7 +17,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_common_opts "$@"
 
 source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
-rofiargs="${rofiargs// -keep-selection -use-hot-keys} -keep-selection -use-hot-keys -dmenu"
+rofiargs="${rofiargs// -keep-selection -use-hot-keys} -keep-selection -use-hot-keys"
 header="${texts[header_screen-keyboard]}"
 keys="$(readlink -q -n "${HOME}/.local/state/urd-screen-keyboard" 2>/dev/null)"
 keys="${keys:-"./common/keyboards/QWERTY_en-US_48.keys"}"
