@@ -1,13 +1,13 @@
-type_key exclam\x00display\x1f1\x1fpermanent\x1ftrue
-type_key at\x00display\x1f2\x1fpermanent\x1ftrue
-type_key numbersign\x00display\x1f3\x1fpermanent\x1ftrue
-type_key dollar\x00display\x1f4\x1fpermanent\x1ftrue
-type_key percent\x00display\x1f5\x1fpermanent\x1ftrue
-type_key asciicircum\x00display\x1f6\x1fpermanent\x1ftrue
-type_key ampersand\x00display\x1f7\x1fpermanent\x1ftrue
-type_key asterisk\x00display\x1f8\x1fpermanent\x1ftrue
-type_key parenleft\x00display\x1f9\x1fpermanent\x1ftrue
-type_key parenright\x00display\x1f0\x1fpermanent\x1ftrue
+type_key exclam\x00display\x1f!\x1fpermanent\x1ftrue
+type_key at\x00display\x1f@\x1fpermanent\x1ftrue
+type_key numbersign\x00display\x1f№\x1fpermanent\x1ftrue
+type_key dollar\x00display\x1f$\x1fpermanent\x1ftrue
+type_key percent\x00display\x1f%\x1fpermanent\x1ftrue
+type_key asciicircum\x00display\x1f^\x1fpermanent\x1ftrue
+type_key ampersand\x00display\x1f&amp;\x1fpermanent\x1ftrue
+type_key asterisk\x00display\x1f*\x1fpermanent\x1ftrue
+type_key parenleft\x00display\x1f(\x1fpermanent\x1ftrue
+type_key parenright\x00display\x1f)\x1fpermanent\x1ftrue
 type_key underscore\x00display\x1f_\x1fpermanent\x1ftrue
 type_key plus\x00display\x1f+\x1fpermanent\x1ftrue
 type_key q capslock\x00display\x1fQ\x1fpermanent\x1ftrue

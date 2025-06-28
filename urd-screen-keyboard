@@ -17,9 +17,10 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_common_opts "$@"
 
 source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
-rofiargs="${rofiargs// -keep-selection} -keep-selection"
-header="${texts[header_screen-keyboard]:-Screen keyboard}"
-keys="./common/keyboards/QWERTY_en-US_48.keys"
+rofiargs="${rofiargs// -keep-selection -use-hot-keys} -keep-selection -use-hot-keys -dmenu"
+header="${texts[header_screen-keyboard]}"
+keys="$(readlink -q -n "${HOME}/.local/state/urd-screen-keyboard" 2>/dev/null)"
+keys="${keys:-"./common/keyboards/QWERTY_en-US_48.keys"}"
 theme="./common/themes/horizontal_keyboard.rasi"
 
 select_keyboard() {
@@ -30,21 +31,26 @@ select_keyboard() {
 	entries=""
 	for i in "${!keyboards[@]}"; do
 		# send_notification ${keyboards[i]}
-		enabled="$([[ "${keyboards[i]}" == "${current_keyboard}" ]] && echo "true" || echo "false")"
-		entries+="$(write_menuentry "${keyboards[i]##*/}" "set_keyboard ${keyboards[i]}" "${icons[keyboard]}" "${enabled}")"
+		[[ "${keyboards[i]##*/}" == "${current_keyboard}" ]] && enabled="true" || enabled="false"
+		entries+="$(write_menuentry "${keyboards[i]##*/}" "ln -snf ${keyboards[i]} ${HOME}/.local/state/urd-screen-keyboard" \
+			"${icons[keyboard]}" "${enabled}" "true" "false" "false" "${texts[cant]} ${texts[select]} ${texts[keyboard]}")"
 	done
 	header="${texts[select]} ${texts[keyboard]}"
 	theme="./common/themes/vertical_menu.rasi"
-	#rofiargs="${rofiargs// -keep-filter} -keep-filter"
+	rofiargs="${rofiargs// -keep-filter} -keep-filter"
+	#rofiargs="${rofiargs// -dmenu} -dmenu"
 	handle_rofi
 	return $?
 }
 
 toggle_caps() {
 	local current_keyboard="${1?${texts[missingarg]:-Missing argument} current_keyboard}"
-	local caps="$([[ "${current_keyboard}" =~ ".caps" ]] && echo "" || echo ".caps")"
-	set_keyboard "./common/keyboards/${current_keyboard}${caps}"
+	[[ "${current_keyboard}" =~ ".caps" ]] && \
+		keys="./common/keyboards/${current_keyboard%*.caps}" || \
+		keys="./common/keyboards/${current_keyboard}.caps"
+	ln -snf "${keys}" "${HOME}/.local/state/urd-screen-keyboard" &>/dev/null
 	rofiargs="${rofiargs// -keep-filter} -keep-filter"
+	set_keyboard
 	return $?
 }
 
@@ -59,22 +65,20 @@ type_key() {
 }
 
 type_string() {
-	echo -e "${ROFI_DATA}" 1>&3
+	echo -e "${ROFI_DATA}" >> ~/.local/state/urd-screen-keyboard.history
 	rofiargs="${rofiargs// -keep-filter}"
 	export ROFI_DATA=''
 	# send_notification "${texts[copied]^}: ${ROFI_DATA}"
 }
 
 set_keyboard() {
-	local keyboard="${1?${texts[missingarg]:-Missing argument} keyboard}"
-	keys="${keyboard}"
-	entries="$(<${keyboard})"
+	entries="$(<${keys})"
 	rofiargs="${rofiargs// -keep-filter} -keep-filter"
-	handle_rofi
 	return $?
 }
 
-set_keyboard "${keys}"
+set_keyboard
+handle_rofi
 
 #send_notification "After handle rofi. RETV=${ROFI_RETV}"
 if ${force_dmenu} ; then
@@ -87,6 +91,11 @@ else
 	case ${ROFI_RETV} in
 		0) # Restart after selection
 			write_script_entries
+		;;
+		10)
+			type_key backspace
+			write_script_entries
+			ROFI_RETV=0
 		;;
 	esac
 fi

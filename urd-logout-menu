@@ -16,7 +16,7 @@ usage="${texts[usage]}: ${prog} [$texts[options]]
 # parse options
 handle_common_opts "$@"
 source "./common/langs/${default_lang}"  # sourcing default lang here is urgent for common optional argument -lang=xx_XX
-rofiargs+=" -dmenu"
+rofiargs="${rofiargs// -dmenu} -dmenu"
 
 # All supported choices
 all=(poweroff reboot suspend hibernate firmware logout lock)

@@ -38,7 +38,7 @@ mainbox {
 
 inputbar { 
     enabled: true;
-    children: [  icon-keyboard, entry, mode-switcher ];
+    children: [ icon-keyboard, entry, button-backspace, button-close ];
 }
 
 message { 
@@ -51,6 +51,7 @@ element {
     spacing: 5px;
     vertical-align: 0.5;
     text-color: inherit;
+    expand: true;
 }
 
 element-text { 
@@ -72,8 +73,23 @@ icon-keyboard {
 }
 
 button-close {
-    str: " ";
+    content: "&#xf0159;";
     action: "kb-cancel";
+}
+
+button-backspace {
+    content: "&#xf006e;";
+    action: "kb-custom-1";
+}
+
+button-close, button-backspace {
+    padding         : 0.25em 0.5em;
+    spacing         : 0;
+    expand          : false;
+    vertical-align  : 0.5;
+    horizontal-align: 0.5;
+    margin          : 0;
+    markup          : true;
 }
 
 //button-select-layout {

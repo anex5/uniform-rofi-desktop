@@ -11,10 +11,10 @@ type_key 0\x00display\x1f0\x1fpermanent\x1ftrue
 type_key minus\x00display\x1f-\x1fpermanent\x1ftrue
 type_key equal\x00display\x1f=\x1fpermanent\x1ftrue
 type_key Cyrillic_shorti\x00display\x1fй\x1fpermanent\x1ftrue
-type_key Cyrillic_ce\x00display\x1fц\x1fpermanent\x1ftrue
+type_key Cyrillic_tse\x00display\x1fц\x1fpermanent\x1ftrue
 type_key Cyrillic_u\x00display\x1fу\x1fpermanent\x1ftrue
 type_key Cyrillic_ka\x00display\x1fк\x1fpermanent\x1ftrue
-type_key Cyrillic_yhe\x00display\x1fе\x1fpermanent\x1ftrue
+type_key Cyrillic_ie\x00display\x1fе\x1fpermanent\x1ftrue
 type_key Cyrillic_en\x00display\x1fн\x1fpermanent\x1ftrue
 type_key Cyrillic_ge\x00display\x1fг\x1fpermanent\x1ftrue
 type_key Cyrillic_sha\x00display\x1fш\x1fpermanent\x1ftrue
@@ -40,7 +40,7 @@ type_key Cyrillic_che\x00display\x1fч\x1fpermanent\x1ftrue
 type_key Cyrillic_es\x00display\x1fс\x1fpermanent\x1ftrue
 type_key Cyrillic_em\x00display\x1fм\x1fpermanent\x1ftrue
 type_key Cyrillic_i\x00display\x1fи\x1fpermanent\x1ftrue
-type_key Cyrillic_t\x00display\x1fт\x1fpermanent\x1ftrue
+type_key Cyrillic_te\x00display\x1fт\x1fpermanent\x1ftrue
 type_key Cyrillic_softsign\x00display\x1fь\x1fpermanent\x1ftrue
 type_key Cyrillic_be\x00display\x1fб\x1fpermanent\x1ftrue
 type_key Cyrillic_yu\x00display\x1fю\x1fpermanent\x1ftrue

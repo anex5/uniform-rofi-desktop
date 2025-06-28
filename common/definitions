@@ -283,10 +283,22 @@ confirm() {
     header="${texts[areyousure]^}"
     theme="./common/themes/confirm.rasi"
     rofiargs="${rofiargs// -selected-row 1} -selected-row 1"
+    rofiargs="${rofiargs// -dmenu} -dmenu"
     handle_rofi
     return $?
 }
 export -f confirm
+
+prompt() {
+    header="${@?${texts[missingarg]:-Missing argument} action}"
+    theme="./common/themes/prompt.rasi"
+    rofiargs="${rofiargs// -selected-row 1} -selected-row 1"
+    rofiargs="${rofiargs// -dmenu} -dmenu"
+    rofiargs="${rofiargs// -format .} -format p"
+    handle_rofi
+    return $?
+}
+export -f prompt
 
 run_menuentry_action() {
     local action="${@?${texts[missingarg]:-Missing argument} action}"
@@ -303,10 +315,11 @@ run_menuentry_action() {
     fi
     
     #catch_posix "retcode" "error_msg" "${action}"
-    ${action} &>/dev/null
+    ${action}
+    #&>/dev/null
     retcode=${retcode:-$?}
     if [ ${retcode} -ne 0 -a -n "${error_msg}" ]; then
-        send_notification "${error_msg}. ${texts[error]^}: ${retcode}"
+        send_notification "${action}" "${error_msg}. ${texts[error]^}: ${retcode}"
     fi
     return ${retcode}
 }
