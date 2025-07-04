@@ -56,11 +56,12 @@ toggle_caps() {
 
 type_key() {
 	local key="-k ${1?${texts[missingarg]:-Missing argument} key}"
-	[[ -n "${2}" ]] && local mod="-M ${2} " || local mod=""
-	local s=$(wtype ${mod}${key})
+	[[ -n "${2}" ]] && local mod="-M ${2} ${key} -m ${2}" || local mod="${key}"
+	wtype ${mod}
 	local wtype_ret=$?
-	export ROFI_DATA+="${s}"
+	ROFI_DATA+="${1}"
 	rofiargs="${rofiargs// -keep-filter} -keep-filter"
+	#send_notification "${texts[copied]^}: ${ROFI_DATA}"
 	return $wtype_ret
 }
 
@@ -68,7 +69,6 @@ type_string() {
 	echo -e "${ROFI_DATA}" >> ~/.local/state/urd-screen-keyboard.history
 	rofiargs="${rofiargs// -keep-filter}"
 	export ROFI_DATA=''
-	# send_notification "${texts[copied]^}: ${ROFI_DATA}"
 }
 
 set_keyboard() {
@@ -85,6 +85,11 @@ if ${force_dmenu} ; then
 	case ${ROFI_RETV} in
 		0) # Restart after selection
 			exec ./${prog} ${args// -arg *} -arg "-f ${chosen}"
+		;;
+		10)
+			type_key backspace
+			write_script_entries
+			ROFI_RETV=0
 		;;
 	esac
 else

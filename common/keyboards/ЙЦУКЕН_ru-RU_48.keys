@@ -16,7 +16,7 @@ type_key Cyrillic_u\x00display\x1fу\x1fpermanent\x1ftrue
 type_key Cyrillic_ka\x00display\x1fк\x1fpermanent\x1ftrue
 type_key Cyrillic_ie\x00display\x1fе\x1fpermanent\x1ftrue
 type_key Cyrillic_en\x00display\x1fн\x1fpermanent\x1ftrue
-type_key Cyrillic_ge\x00display\x1fг\x1fpermanent\x1ftrue
+type_key Cyrillic_ghe\x00display\x1fг\x1fpermanent\x1ftrue
 type_key Cyrillic_sha\x00display\x1fш\x1fpermanent\x1ftrue
 type_key Cyrillic_shcha\x00display\x1fщ\x1fpermanent\x1ftrue
 type_key Cyrillic_ze\x00display\x1fз\x1fpermanent\x1ftrue

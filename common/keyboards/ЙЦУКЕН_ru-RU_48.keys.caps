@@ -16,7 +16,7 @@ type_key Cyrillic_u capslock\x00display\x1fУ\x1fpermanent\x1ftrue
 type_key Cyrillic_ka capslock\x00display\x1fК\x1fpermanent\x1ftrue
 type_key Cyrillic_ie capslock\x00display\x1fЕ\x1fpermanent\x1ftrue
 type_key Cyrillic_en capslock\x00display\x1fН\x1fpermanent\x1ftrue
-type_key Cyrillic_ge capslock\x00display\x1fГ\x1fpermanent\x1ftrue
+type_key Cyrillic_ghe capslock\x00display\x1fГ\x1fpermanent\x1ftrue
 type_key Cyrillic_sha capslock\x00display\x1fШ\x1fpermanent\x1ftrue
 type_key Cyrillic_shcha capslock\x00display\x1fЩ\x1fpermanent\x1ftrue
 type_key Cyrillic_ze capslock\x00display\x1fЗ\x1fpermanent\x1ftrue
