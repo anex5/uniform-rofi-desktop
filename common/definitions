@@ -304,7 +304,7 @@ run_menuentry_action() {
     local action="${@?${texts[missingarg]:-Missing argument} action}"
     local -i retcode=
     local error_msg=""
-        
+ 
     export ROFI_RETV=0
     error_msg="${ROFI_INFO}"
     #send_notification "Chosen: ${action} Error msg: ${error_msg}"
@@ -313,7 +313,7 @@ run_menuentry_action() {
         send_notification "Dry run:" "${action} ${error_msg^}"
         return 0
     fi
-    
+
     #catch_posix "retcode" "error_msg" "${action}"
     ${action}
     #&>/dev/null

@@ -151,7 +151,7 @@ change_bg() {
             last_bg[${index}]="${bg}|${bginfill}|${bgcolor}"
             ${SWAYMSG} output \"${display#* }\" bg \"${bg@Q}\" \"${bginfill}\" \"#${bgcolor}\" && mklink ${index}
         ;;
-        "avi"|"mp4"|"webm")
+        "avi"|"mp4"|"webm"|"m3u")
             killall swaybg
             killall mpvpaper
             last_bg[${index}]="${bg}|${bginfill}|${bgcolor}"
@@ -219,7 +219,7 @@ set_bg_video() {
     f="$(${ROFI} ${rofiargs// -dmenu} -show filebrowser -theme-str "@import \"./common/themes/vertical_menu.rasi\"" \
         -filebrowser-directories-first true \
         -filebrowser-directory "${WPSRCDIR/#~/$HOME}" \
-        -filebrowser-filter-regex "^.*(?<!\.(avi|mp4|mpeg|ts|webm|wmv))$" \
+        -filebrowser-filter-regex "^.*(?<!\.(avi|mp4|mpeg|ts|webm|wmv|m3u))$" \
         -filebrowser-command "echo -en " \
         -filebrowser-fallback-icon "video-x-generic" \
     )"
@@ -254,7 +254,7 @@ set_bg_solid_color(){
 
 is_video(){
     local file="${@?${texts[missingarg]:-"Missing argument file"}}"
-    [[ " wmv mpeg mp4 webm avi vob ts mkv " =~ " ${file##*.} " ]] && echo true || echo false
+    [[ " wmv mpeg mp4 webm avi vob ts mkv m3u " =~ " ${file##*.} " ]] && echo true || echo false
 }
 
 is_image(){
