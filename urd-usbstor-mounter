@@ -28,14 +28,16 @@ is_mounted() {
 
 mount_all() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"
-    for part in ${device}-part?*; do 
+    local parts="$(test -a ${device}-part0 && echo ${device}-part?* || echo ${device})"
+    for part in ${parts}; do 
         catch_posix retcode error_msg ${UDISKSCTL} mount --no-user-interaction -b ${part}
     done
 }
 
 unmount_all() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"
-    for part in ${device}-part?*; do 
+    local parts="$(test -a ${device}-part0 && echo ${device}-part?* || echo ${device})"
+    for part in ${parts}; do 
         catch_posix retcode error_msg ${UDISKSCTL} unmount --no-user-interaction -b ${part}
     done
     catch_posix retcode error_msg ${UDISKSCTL} power-off --no-user-interaction -b ${device} \
