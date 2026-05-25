@@ -87,6 +87,11 @@ set_device(){
         "${icons[power]}" "${bool[${curr_powered}]}" "true" "false" "false" \
         "${texts[cantset]} ${texts[bluetooth]} ${texts[power]}" \
     )"
+    entries+="$(write_menuentry "${texts[reset]^}" \
+        "catch_posix retcode error_msg hciconfig -a ${btctl[index]} reset" \
+        "${icons[reboot]}" "false" "true" "false" "false" \
+        "${texts[cantset]} ${texts[bluetooth]} ${texts[reset]}" \
+    )"
     entries+="$(write_menuentry "${texts[btscan]^}" \
         "catch_posix retcode error_msg send_btcmd ${device} scan ${toggle[${curr_scanning}]}" \
         "${icons[search]}" "${bool[${curr_scanning}]}" "true" "false" "false" \
