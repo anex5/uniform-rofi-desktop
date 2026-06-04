@@ -26,9 +26,9 @@ show=("${all[@]}")
 #show=(poweroff reboot suspend logout lock) 
 
 declare -A act
-act[lock]="${LOCK}"
-#act[lock]="${LOGIND} lock-session ${XDG_SESSION_ID-}"
-act[logout]="confirm ${LOGIND} kill-user ${USER}"
+#act[lock]="${LOCK}"
+act[lock]="loginctl lock-session ${XDG_SESSION_ID-}"
+act[logout]="confirm loginctl terminate-user ${USER}"
 act[suspend]="${LOGIND} suspend"
 act[hibernate]="${LOGIND} hibernate"
 act[reboot]="confirm ${LOGIND} reboot"
