@@ -200,7 +200,7 @@ for i in "${!devices[@]}"; do
     test -f "${output_file_name}.${img_formats[curr_img_format]}" && scanned="true" || scanned="false"
 
     entries+="$(write_menuentry "<span>${branch[1]}</span>${texts[scan]^}" \
-        "catch_posix retcode error_msg ${SCANIMAGE} ${device_options} --device-name=${device_path}" \
+        "catch_posix msg error_msg retcode ${SCANIMAGE} ${device_options} --device-name=${device_path}" \
         "${icons[scan]}" "${scanned}" "true" "false" "false" \
         "${texts[cant]^} ${texts[scan]}" \
     )"

@@ -3,7 +3,7 @@ ORIGIN="$(readlink -q "${BASH_SOURCE[0]}" || echo -e "${BASH_SOURCE[0]}" )"
 cd "${ORIGIN%/*}"
 UDISKSCTL="udisksctl"
 LSBLK="lsblk -n -l"
-RDEPS+="${UDISKSCTL},${LSBLK}"
+RDEPS+="udisksctl,lsblk,"
 source "./common/definitions"
 prog="${0##*/}"
 nprog=${prog//-/_}
@@ -16,7 +16,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_common_opts "${@}"
 args=$*
 source "./common/langs/${default_lang}"
-rofiargs="${rofiargs// -dmenu} -dmenu"
+#rofiargs="${rofiargs// -dmenu} -dmenu"
 default_themestr+="element-text { tab-stops: [8em, 12em]; } "
 header="${texts[header_usbstor_mounter]}"
 theme="./common/themes/vertical_menu.rasi"
@@ -26,27 +26,56 @@ is_mounted() {
     ${GREP} -q "$(readlink -f "${device}")" /proc/mounts 2>/dev/null && echo true || echo false
 }
 
+mount_action() {
+    local part="${1?${texts[missingarg]:-Missing argument} partition}"
+    local mounted="${2?${texts[missingarg]:-Missing argument} mounted}"
+    catch_posix msg error_msg retcode ${UDISKSCTL} ${act[${mounted}]%%_*} --no-user-interaction -b ${part}
+    if [ -n "${msg}" ]; then 
+        send_notification "${msg}"
+    fi
+    return ${retcode}
+}
+
 mount_all() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"
-    local parts="$(test -a ${device}-part0 && echo ${device}-part?* || echo ${device})"
-    for part in ${parts}; do 
-        catch_posix retcode error_msg ${UDISKSCTL} mount --no-user-interaction -b ${part}
+    local parts="$(test -a ${device}1 && echo ${device}?* || echo ${device})"
+    for part in ${parts}; do
+        mount_action "${part}" "false"
     done
 }
 
 unmount_all() {
     local device="${1?${texts[missingarg]:-Missing argument} device}"
-    local parts="$(test -a ${device}-part0 && echo ${device}-part?* || echo ${device})"
+    local parts="$(test -a ${device}1 && echo ${device}?* || echo ${device})"
     for part in ${parts}; do 
-        catch_posix retcode error_msg ${UDISKSCTL} unmount --no-user-interaction -b ${part}
+        mount_action "${part}" "true"
+        retcode+=$?
     done
-    catch_posix retcode error_msg ${UDISKSCTL} power-off --no-user-interaction -b ${device} \
-        && send_notification "${texts[usbpoweroff]} ${device}" || send_notification "${texts[cantusbpoweroff]} ${device}"
+    if [ ${retcode} -eq 0 ]; then
+        catch_posix msg error_msg retcode "echo 1 | tee /sys/block/${device##*/}/device/state"
+        if [ ${retcode} -eq 0 ]; then
+            send_notification "${texts[portpoweroff]^} ${device}"
+        else
+            send_notification "${texts[cantportpoweroff]^} ${device}"
+        fi
+    fi
+}
+
+get_removable_block_devices() {
+    for i in /sys/block/* ; do 
+        [[ "$(cat ${i}/removable)" == "1" || "$(udevadm info --query=property --name="${i##*/}" | grep -c "UDISKS_AUTO=1")" == "1" ]] && echo -e "/dev/${i##*/}"
+    done
 }
 
 declare -a devices
-IFS=$NF read -d \" -r -a devices <<< "$(${LS} /dev/disk/by-id/* | ${SED} -ne '/\(usb-.*-0\:[0-9]\+\)$/p' 2>/dev/null)"
-[ ${#devices[@]} -eq 0 ] && die -1 "${texts[nousbblockdevice]}"
+# IFS=$NF read -d \" -r -a devices <<< "$(${LS} /dev/disk/by-id/* | ${SED} -ne '/\(usb-.*-0\:[0-9]\+\)$/p' 2>/dev/null)" # for usb only
+IFS=$NF read -d \" -r -a devices <<< "$(get_removable_block_devices)"
+
+[ ${#devices[@]} -eq 0 ] && die -1 "${texts[noremovableblockdevice]}"
+# Rescan sata ports
+#for i in /sys/class/scsi_host/host* ; do 
+#    echo "- - -" 2>/dev/null > "${i}/scan" 
+#done
 
 declare -A act
 act=( [true]="unmount_all" [false]="mount_all" )
@@ -60,13 +89,13 @@ for i in "${!devices[@]}"; do
         "${icons[USB]}" "${mounted}" "true" "false" "false" \
         "${texts[cant]} ${texts["${act[${mounted}]}%%_*"]} ${texts[device]}: ${devices[i]}" \
     )"
-    IFS=$NF read -d \" -r -a partitions <<< "$(${LS} ${devices[i]}-part* 2>/dev/null)"
+    IFS=$NF read -d \" -r -a partitions <<< "$(${LS} ${devices[i]}?* 2>/dev/null)"
     for j in "${!partitions[@]}"; do
         label="$(${LSBLK} -o LABEL ${partitions[j]})"
         mounted=$(is_mounted "${partitions[$j]}")
         name="${label:0:16}\t$(${LSBLK} -o FSTYPE,SIZE "${partitions[j]}" | ${SED} 's/[[:space:]]\+/\t/g;s/</\&\#x003c;/')"
         entries+="$(write_menuentry "$(get_branch_icon "${#partitions[@]}" "$j") ${name}" \
-            "catch_posix retcode error_msg ${UDISKSCTL} ${act[${mounted}]%%_*} --no-user-interaction -b ${partitions[j]}" \
+            "mount_action ${partitions[j]} ${mounted}" \
             "${icons[partition]}" "${mounted}" "false" "false" "false" \
             "${texts[cant]} ${texts[${act[${mounted}]%%*_}]} ${texts[partition]}: ${partitions[j]})]}" \
         )"

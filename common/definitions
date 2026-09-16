@@ -263,17 +263,45 @@ write_menuentry() {
     echo -n "${sep}"
 }
 
-catch_posix() {
-    # catch_posix STDOUT_VARIABLE STDERR_VARIABLE COMMAND
-    local _CTRL_Z_=$'\cZ'
-    {
-        IFS=$NF"${_CTRL_Z_}" read -r -d"${_CTRL_Z_}" "${1}";
-        IFS=$NF"${_CTRL_Z_}" read -r -d"${_CTRL_Z_}" "${2}";
-        ( IFS=$NF"${_CTRL_Z_}" read -r -d"${_CTRL_Z_}" _ERRNO_; return ${_ERRNO_}; )
-    } <<EOF
-$( (printf "${_CTRL_Z_}%s${_CTRL_Z_}%d${_CTRL_Z_}" "$( ( ( ({ shift 2; "${@}"; echo "${?}" 1>&3-; } | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 4>&2- 2>&1- | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 3>&1- | exit "$(cat)") 4>&1-)" "${?}" 1>&2) 2>&1)
-EOF
+function catch_posix() {
+#catch STDOUT_VAR_NAME STDERR_VAR_NAME EXIT_CODE_VAR_NAME COMMAND1 [COMMAND2 [...]]
+  {
+    IFS=$'\n' read -r -d '' "${1}";
+    IFS=$'\n' read -r -d '' "${2}";
+    IFS=$'\n' read -r -d '' "${3}";
+
+    return 0;
+  }\
+  < <(
+    (printf '\0%s\0%d\0' \
+      "$(
+        (
+          (
+            (
+              {
+                shift 3;
+                eval "${@}";
+                echo "${?}" 1>&3-;
+              } | tr -d '\0' 1>&4-
+            ) 4>&2- 2>&1- | tr -d '\0' 1>&4-
+          ) 3>&1- | exit "$(cat)"
+        ) 4>&1-
+      )" "${?}" 1>&2
+    ) 2>&1
+  )
 }
+
+#catch_posix() {
+    # catch_posix STDOUT_VARIABLE STDERR_VARIABLE COMMAND
+#    local _CTRL_Z_=$'\cZ'
+#    {
+#        IFS=$NF"${_CTRL_Z_}" read -r -d"${_CTRL_Z_}" "${1}";
+#        IFS=$NF"${_CTRL_Z_}" read -r -d"${_CTRL_Z_}" "${2}";
+#        ( IFS=$NF"${_CTRL_Z_}" read -r -d"${_CTRL_Z_}" _ERRNO_; return ${_ERRNO_}; )
+#    } <<EOF
+#$( (printf "${_CTRL_Z_}%s${_CTRL_Z_}%d${_CTRL_Z_}" "$( ( ( ({ shift 2; "${@}"; echo "${?}" 1>&3-; } | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 4>&2- 2>&1- | cut -z -d"${_CTRL_Z_}" -f1 | tr -d '\0' 1>&4-) 3>&1- | exit "$(cat)") 4>&1-)" "${?}" 1>&2) 2>&1)
+#EOF
+#}
 export -f catch_posix
 
 confirm() {
@@ -314,9 +342,7 @@ run_menuentry_action() {
         return 0
     fi
 
-    #catch_posix "retcode" "error_msg" "${action}"
     ${action}
-    #&>/dev/null
     retcode=${retcode:-$?}
     if [ ${retcode} -ne 0 -a -n "${error_msg}" ]; then
         send_notification "${action}" "${error_msg}. ${texts[error]^}: ${retcode}"

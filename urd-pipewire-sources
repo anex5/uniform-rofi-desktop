@@ -34,7 +34,7 @@ for i in "${!devices[@]}"; do
     name="$(${SED} -n "s/^[* ]\+[0-9]\+\. \([^\[]\+\).*$/\1/p" <<< ${str})"
     device="$(${WPCTL} inspect ${ids} | ${SED} -n 's/^ \+api\.alsa\.pcm\.id = \"\([A-Z]\+\).*\"/\1/p')"
     entries+="$(write_menuentry "${icons[vol${volume// }]} ${name}" \
-        "catch_posix retcode error_msg ${act[${enabled}]} ${ids} ${enabled}" \
+        "catch_posix msg error_msg retcode ${act[${enabled}]} ${ids} ${enabled}" \
         "${icons[${device}]}" "${bool[${enabled}]}" "false" "false" "false" \
         "${texts[cant]:-"Can't"} ${texts[set]:-"set"} ${texts[audiosource]:-audio source}" \
     )"

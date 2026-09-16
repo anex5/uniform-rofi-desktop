@@ -83,27 +83,27 @@ set_device(){
     local curr_scanning="$( ${GREP} -q "Discovering: yes" <<< "${bdinfo[${index}]}" && echo "on" || echo "off" )"
 
     entries="$(write_menuentry "${texts[power]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} power ${toggle[${curr_powered}]}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} power ${toggle[${curr_powered}]}" \
         "${icons[power]}" "${bool[${curr_powered}]}" "true" "false" "false" \
         "${texts[cantset]} ${texts[bluetooth]} ${texts[power]}" \
     )"
     entries+="$(write_menuentry "${texts[reset]^}" \
-        "catch_posix retcode error_msg hciconfig -a ${btctl[index]} reset" \
+        "catch_posix msg error_msg retcode hciconfig -a ${btctl[index]} reset" \
         "${icons[reboot]}" "false" "true" "false" "false" \
         "${texts[cantset]} ${texts[bluetooth]} ${texts[reset]}" \
     )"
     entries+="$(write_menuentry "${texts[btscan]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} scan ${toggle[${curr_scanning}]}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} scan ${toggle[${curr_scanning}]}" \
         "${icons[search]}" "${bool[${curr_scanning}]}" "true" "false" "false" \
         "${texts[cantset]} ${texts[bluetooth]} ${texts[btscan]}" \
     )"
     entries+="$(write_menuentry "${texts[discoverable]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} discoverable ${toggle[${curr_discoverable}]}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} discoverable ${toggle[${curr_discoverable}]}" \
         "${icons[discoverable]}" "${bool[${curr_discoverable}]}" "true" "false" "false" \
         "${texts[cantset]} ${texts[bluetooth]} ${texts[discoverable]}" \
     )"
     entries+="$(write_menuentry "${texts[pairable]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} pairable ${toggle[${curr_pairable}]}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} pairable ${toggle[${curr_pairable}]}" \
         "${icons[pairable]}" "${bool[${curr_pairable}]}" "true" "false" "false" \
         "${texts[cantset]} ${texts[bluetooth]} ${texts[pairable]}" \
     )"
@@ -132,27 +132,27 @@ set_client(){
     toggle_connected=( [off]=connect [on]=disconnect )
 
     entries="$(write_menuentry "${texts[${toggle_paired[$paired]}]^}" \
-        "catch_posix retcode error_msg bt_pair ${toggle_paired[${paired}]} ${client}" \
+        "catch_posix msg error_msg retcode bt_pair ${toggle_paired[${paired}]} ${client}" \
         "${icons[link]}" "${bool[${paired}]}" "true" "false" "false" \
         "${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_paired[${paired}]}]} ${texts[device]} ${name}" \
     )"
     entries+="$(write_menuentry "${texts[${toggle_connected[$connected]}]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} ${toggle_connected[${connected}]} ${client}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} ${toggle_connected[${connected}]} ${client}" \
         "${icons[btconnect]}" "${bool[${connected}]}" "true" "false" "false" \
         "${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_connected[${connected}]}]} ${texts[device]} ${name}" \
     )"
     entries+="$(write_menuentry "${texts[${toggle_trusted[$trusted]}]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} ${toggle_trusted[$trusted]} ${client}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} ${toggle_trusted[$trusted]} ${client}" \
         "${icons[trust]}" "${bool[${trusted}]}" "true" "false" "false" \
         "${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_trusted[${trusted}]}]} ${texts[device]} ${name}" \
     )"
     entries+="$(write_menuentry "${texts[${toggle_blocked[$blocked]}]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} ${toggle_blocked[${blocked}]} ${client}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} ${toggle_blocked[${blocked}]} ${client}" \
         "${icons[lock]}" "${bool[${blocked}]}" "true" "false" "false" \
         "${texts[cantset]^} ${texts[bluetooth]} ${texts[${toggle_blocked[${blocked}]}]} ${texts[device]} ${name}" \
     )"
     entries+="$(write_menuentry "${texts[remove]^}" \
-        "catch_posix retcode error_msg send_btcmd ${device} remove ${client}" \
+        "catch_posix msg error_msg retcode send_btcmd ${device} remove ${client}" \
         "${icons[trash]}" "true" "true" "false" "false" \
         "${texts[cantset]^} ${texts[bluetooth]} ${texts[remove]}]} ${texts[device]} ${name}" \
     )"
