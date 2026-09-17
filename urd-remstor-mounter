@@ -18,7 +18,7 @@ args=$*
 source "./common/langs/${default_lang}"
 #rofiargs="${rofiargs// -dmenu} -dmenu"
 default_themestr+="element-text { tab-stops: [8em, 12em]; } "
-header="${texts[header_usbstor_mounter]}"
+header="${texts[header_remstor_mounter]}"
 theme="./common/themes/vertical_menu.rasi"
 
 is_mounted() {
@@ -71,11 +71,11 @@ declare -a devices
 # IFS=$NF read -d \" -r -a devices <<< "$(${LS} /dev/disk/by-id/* | ${SED} -ne '/\(usb-.*-0\:[0-9]\+\)$/p' 2>/dev/null)" # for usb only
 IFS=$NF read -d \" -r -a devices <<< "$(get_removable_block_devices)"
 
-[ ${#devices[@]} -eq 0 ] && die -1 "${texts[noremovableblockdevice]}"
+[ ${#devices[@]} -eq 0 ] && die -1 "${texts[noremblockdevices]}"
 # Rescan sata ports
-#for i in /sys/class/scsi_host/host* ; do 
-#    echo "- - -" 2>/dev/null > "${i}/scan" 
-#done
+for i in /sys/class/scsi_host/host* ; do 
+    echo "- - -" 2>/dev/null > "${i}/scan" 
+done
 
 declare -A act
 act=( [true]="unmount_all" [false]="mount_all" )
@@ -83,10 +83,11 @@ act=( [true]="unmount_all" [false]="mount_all" )
 for i in "${!devices[@]}"; do
     name="$(${LSBLK} -d -o TRAN,VENDOR,MODEL,LABEL "${devices[i]}" 2>/dev/null | ${SED} 's/[[:space:]]\+/ /g;s/\(^[a-z]\+\)/\U\1/')"
     mounted=$(is_mounted "${devices[i]}")
+    bus="${name%% *}"
     #warn "${devices[i]} mounted=$mounted"
     entries+="$(write_menuentry "${name}" \
         "${act[${mounted}]} ${devices[i]}" \
-        "${icons[USB]}" "${mounted}" "true" "false" "false" \
+        "${icons[${bus}]}" "${mounted}" "true" "false" "false" \
         "${texts[cant]} ${texts["${act[${mounted}]}%%_*"]} ${texts[device]}: ${devices[i]}" \
     )"
     IFS=$NF read -d \" -r -a partitions <<< "$(${LS} ${devices[i]}?* 2>/dev/null)"
