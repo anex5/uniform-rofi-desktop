@@ -10,7 +10,6 @@ RDEPS+="${SWAYMSG},${SWAYBG},${MPVPAPER},${JQ},"
 WPSRCDIR="~/Wallpapers"
 source "./common/definitions"
 prog="${0##*/}"
-args=$*
 nprog=${prog//-/_}
 usage="${texts[usage]}: ${prog} [${texts[options]}]
 
@@ -20,11 +19,12 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 # parse options
 
 handle_common_opts "$@"
-
-rofiargs+=" -dmenu"
+args=$*
+source "./common/langs/${default_lang}"
+rofiargs="${rofiargs// -dmenu} -dmenu"
 # default_themestr+="element-text { tab-stops: [8em, 9em, 10.1em]; } "
-theme="./common/themes/vertical_menu.rasi"
 header="${texts[header_sway_display]}"
+theme="./common/themes/vertical_menu.rasi"
 
 declare -A switch power
 switch=( 

@@ -16,7 +16,7 @@ usage="${texts[usage]}: ${prog} [${texts[options]}]
 handle_common_opts "${@}"
 args=$*
 source "./common/langs/${default_lang}"
-#rofiargs="${rofiargs// -dmenu} -dmenu"
+rofiargs="${rofiargs// -dmenu} -dmenu"
 default_themestr+="element-text { tab-stops: [8em, 12em]; } "
 header="${texts[header_remstor_mounter]}"
 theme="./common/themes/vertical_menu.rasi"
