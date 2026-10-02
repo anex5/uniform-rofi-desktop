@@ -52,7 +52,12 @@ unmount_all() {
         retcode+=$?
     done
     if [ ${retcode} -eq 0 ]; then
-        catch_posix msg error_msg retcode "echo 1 | tee /sys/block/${device##*/}/device/state"
+        local bus="$(${LSBLK} -d -o TRAN ${device} 2>/dev/null)"
+        if [[ "${bus}" == "usb" ]] then
+            catch_posix msg error_msg retcode "${UDISKSCTL} power-off --no-user-interaction -b ${device}"
+        else
+            sync && catch_posix msg error_msg retcode "echo 1 | tee /sys/block/${device##*/}/device/state"
+        fi
         if [ ${retcode} -eq 0 ]; then
             send_notification "${texts[portpoweroff]^} ${device}"
         else
